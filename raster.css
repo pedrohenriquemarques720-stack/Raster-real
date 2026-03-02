@@ -1,0 +1,606 @@
+/* style.css - Tema automotivo profissional */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg-primary: #0a0c10;
+    --bg-secondary: #1a1d24;
+    --bg-tertiary: #2a2f3a;
+    --accent-primary: #ff6600;
+    --accent-secondary: #00b0ff;
+    --success: #00c853;
+    --warning: #ffb300;
+    --danger: #ff3d00;
+    --text-primary: #e8edf5;
+    --text-secondary: #9aa4b8;
+    --border-color: #2e343f;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    height: 100vh;
+    overflow: hidden;
+}
+
+.container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-primary);
+}
+
+/* =============================================
+   HEADER
+   ============================================= */
+.header {
+    background: var(--bg-secondary);
+    border-bottom: 2px solid var(--accent-primary);
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 80px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo-icon {
+    font-size: 40px;
+    filter: drop-shadow(0 0 10px rgba(255,102,0,0.3));
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.logo-text h1 {
+    font-size: 24px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 1px;
+}
+
+.logo-text span {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.header-status {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 15px;
+    background: var(--bg-tertiary);
+    border-radius: 30px;
+    border: 1px solid var(--border-color);
+}
+
+.led {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--danger);
+    box-shadow: 0 0 10px var(--danger);
+    transition: all 0.3s;
+}
+
+.led.connected {
+    background: var(--success);
+    box-shadow: 0 0 10px var(--success);
+}
+
+.vehicle-info .vin {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent-secondary);
+    font-size: 14px;
+}
+
+/* =============================================
+   DASHBOARD PRINCIPAL
+   ============================================= */
+.dashboard {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 300px 1fr 300px;
+    gap: 15px;
+    padding: 15px;
+    overflow: hidden;
+    background: var(--bg-primary);
+}
+
+/* =============================================
+   SIDEBAR ESQUERDA
+   ============================================= */
+.sidebar {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+}
+
+.sidebar h3 {
+    color: var(--accent-primary);
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+}
+
+.connection-type {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.conn-btn {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.conn-btn:hover {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+}
+
+.conn-btn.active {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+}
+
+.device-select {
+    width: 100%;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.primary-btn {
+    width: 100%;
+    padding: 15px;
+    background: var(--accent-primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s;
+    margin-bottom: 20px;
+}
+
+.primary-btn:hover {
+    background: #ff8533;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(255,102,0,0.3);
+}
+
+.vehicle-details {
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-item .label {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.detail-item .value {
+    color: var(--accent-secondary);
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.action-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s;
+    font-size: 13px;
+}
+
+.action-btn:hover {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    transform: translateX(5px);
+}
+
+.action-btn.danger:hover {
+    background: var(--danger);
+}
+
+/* =============================================
+   ÁREA PRINCIPAL
+   ============================================= */
+.main-area {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 20px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+}
+
+.gauges-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.gauge-card {
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    padding: 15px;
+    border-left: 4px solid;
+}
+
+.gauge-card.rpm { border-left-color: #ff6600; }
+.gauge-card.speed { border-left-color: #00ff00; }
+.gauge-card.temp { border-left-color: #ff3333; }
+.gauge-card.battery { border-left-color: #00ffff; }
+
+.gauge-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.gauge-title {
+    color: var(--text-secondary);
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.gauge-unit {
+    color: var(--text-secondary);
+    font-size: 11px;
+}
+
+.gauge-value {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.gauge-card.rpm .gauge-value { color: #ff6600; }
+.gauge-card.speed .gauge-value { color: #00ff00; }
+.gauge-card.temp .gauge-value { color: #ff3333; }
+.gauge-card.battery .gauge-value { color: #00ffff; }
+
+.gauge-bar {
+    height: 6px;
+    background: var(--bg-primary);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.gauge-fill {
+    height: 100%;
+    transition: width 0.3s;
+}
+
+.gauge-card.rpm .gauge-fill { background: #ff6600; }
+.gauge-card.speed .gauge-fill { background: #00ff00; }
+.gauge-card.temp .gauge-fill { background: #ff3333; }
+.gauge-card.battery .gauge-fill { background: #00ffff; }
+
+.charts-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.chart-card {
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.chart-card h3 {
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+
+.chart-card canvas {
+    width: 100%;
+    height: 200px;
+}
+
+.data-table-card, .dtc-card {
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.data-table-card h3, .dtc-card h3 {
+    color: var(--accent-primary);
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    text-align: left;
+    padding: 12px 8px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border-color);
+}
+
+td {
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 13px;
+}
+
+.oscilloscope-card {
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.oscilloscope-card canvas {
+    width: 100%;
+    height: 200px;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.osc-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.osc-btn {
+    padding: 8px 15px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.osc-btn:hover {
+    background: var(--accent-primary);
+}
+
+/* =============================================
+   PAINEL DIREITO
+   ============================================= */
+.right-panel {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+}
+
+.live-data-panel h3, .history-panel h3, .alerts-panel h3 {
+    color: var(--accent-primary);
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+
+.live-data-list {
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    padding: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.live-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    font-size: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.live-item .param {
+    color: var(--text-secondary);
+}
+
+.live-item .value {
+    color: var(--accent-secondary);
+    font-weight: 600;
+}
+
+.history-list {
+    list-style: none;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    padding: 10px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.history-list li {
+    padding: 5px 0;
+    font-size: 12px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.alerts-list {
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    padding: 10px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.alert-item {
+    padding: 8px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    font-size: 12px;
+    border-left: 3px solid;
+}
+
+.alert-item.warning {
+    background: rgba(255,179,0,0.1);
+    border-left-color: var(--warning);
+    color: var(--warning);
+}
+
+.alert-item.error {
+    background: rgba(255,61,0,0.1);
+    border-left-color: var(--danger);
+    color: var(--danger);
+}
+
+.alert-item.success {
+    background: rgba(0,200,83,0.1);
+    border-left-color: var(--success);
+    color: var(--success);
+}
+
+/* =============================================
+   FOOTER
+   ============================================= */
+.footer {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 50px;
+}
+
+.log-area {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--success);
+}
+
+.system-info {
+    color: var(--text-secondary);
+    font-size: 12px;
+    display: flex;
+    gap: 10px;
+}
+
+/* =============================================
+   SCROLLBAR CUSTOMIZADA
+   ============================================= */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-primary);
+}
+
+/* =============================================
+   RESPONSIVIDADE
+   ============================================= */
+@media (max-width: 1200px) {
+    .dashboard {
+        grid-template-columns: 250px 1fr 250px;
+    }
+    
+    .gauges-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .dashboard {
+        grid-template-columns: 1fr;
+    }
+    
+    .sidebar, .right-panel {
+        display: none;
+    }
+}

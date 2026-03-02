@@ -1,0 +1,43 @@
+# requirements.txt - Dependências do projeto
+
+# Web Framework
+streamlit==1.28.0
+fastapi==0.104.0
+uvicorn==0.24.0
+websockets==12.0
+
+# Banco de Dados
+sqlalchemy==2.0.23
+sqlite3
+
+# Visualização
+plotly==5.17.0
+matplotlib==3.7.2
+seaborn==0.12.2
+
+# Comunicação Serial
+pyserial==3.5
+python-can==4.2.2
+
+# OBD2
+obd==0.7.1
+python-obd==0.7.1
+
+# Utilitários
+numpy==1.24.3
+pandas==2.0.3
+python-dotenv==1.0.0
+pyyaml==6.0
+requests==2.31.0
+
+# Processamento
+opencv-python==4.8.1
+pillow==10.0.0
+
+# Testes
+pytest==7.4.0
+pytest-asyncio==0.21.0
+
+# Performance
+asyncio==3.4.3
+aiohttp==3.8.5
