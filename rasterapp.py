@@ -1,4 +1,4 @@
-# app.py - Interface Moderna com Círculo de Saúde, Visualizador 3D e Modo Cliente
+# app.py - Interface Moderna SEM PLOTLY (versão estável)
 
 import streamlit as st
 import pandas as pd
@@ -7,10 +7,7 @@ import time
 import random
 import threading
 from datetime import datetime
-import plotly.graph_objects as go
-import plotly.express as px
 from streamlit_option_menu import option_menu
-import base64
 
 # Importando nossos módulos
 from obd_scanner import OBDScannerRevolucionario as OBDScannerPro
@@ -342,7 +339,6 @@ st.markdown("""
         background: #222;
         border-radius: 8px;
         position: relative;
-        transform-style: preserve-3d;
     }
     
     .component-highlight {
@@ -447,12 +443,30 @@ st.markdown("""
         text-transform: uppercase;
     }
     
-    /* Gráfico */
-    .chart-container {
+    /* Gráfico Simples */
+    .chart-simple {
         background: #1a1d24;
         border-radius: 10px;
         padding: 15px;
         margin: 10px 0;
+        height: 150px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .chart-line {
+        position: absolute;
+        bottom: 20px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: #00ffff;
+        animation: moveLine 3s linear infinite;
+    }
+    
+    @keyframes moveLine {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
     }
     
     /* Remove Streamlit branding */
@@ -505,22 +519,6 @@ st.markdown("""
         font-weight: bold;
         color: #00ffff;
         font-family: 'Roboto Mono', monospace;
-    }
-    
-    /* Tabs personalizadas */
-    .custom-tab {
-        background: #1a1d24;
-        padding: 8px 15px;
-        border-radius: 20px;
-        color: #888;
-        text-align: center;
-        cursor: pointer;
-    }
-    
-    .custom-tab.active {
-        background: #00ffff;
-        color: black;
-        font-weight: bold;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -825,30 +823,14 @@ if st.session_state.current_page == "dashboard":
             </div>
             """, unsafe_allow_html=True)
         
-        # Gráfico de tendência
-        if len(st.session_state.live_history) > 5:
-            hist_df = pd.DataFrame(st.session_state.live_history[-30:])
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(
-                y=hist_df['rpm'], 
-                name='RPM', 
-                line=dict(color='#00ffff', width=2),
-                fill='tozeroy',
-                fillcolor='rgba(0, 255, 255, 0.1)'
-            ))
-            fig.update_layout(
-                height=150,
-                margin=dict(l=0, r=0, t=0, b=0),
-                paper_bgcolor='#1a1d24',
-                plot_bgcolor='#1a1d24',
-                font=dict(color='white'),
-                showlegend=False,
-                xaxis=dict(showgrid=False, showticklabels=False),
-                yaxis=dict(showgrid=True, gridcolor='#333')
-            )
-            st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-            st.plotly_chart(fig, use_container_width=True)
-            st.markdown('</div>', unsafe_allow_html=True)
+        # Gráfico Simples (sem plotly)
+        st.markdown("""
+        <div class="chart-simple">
+            <div class="chart-line"></div>
+            <div style="position:absolute; bottom:5px; left:10px; color:#888; font-size:10px;">RPM</div>
+            <div style="position:absolute; bottom:5px; right:10px; color:#00ffff; font-size:10px;">Tendência</div>
+        </div>
+        """, unsafe_allow_html=True)
     
     # COLUNA DIREITA - Co-Piloto e DTCs
     with col3:
@@ -967,8 +949,8 @@ elif st.session_state.current_page == "visualizador 3d":
         
         # Simulação de visualizador 3D
         st.markdown("""
-        <div class="engine-3d" style="position: relative;">
-            <svg width="100%" height="400" viewBox="0 0 800 400" style="background: #222; border-radius: 8px;">
+        <div class="engine-3d" style="position: relative; height: 400px; background: linear-gradient(135deg, #222, #111); border-radius: 8px; padding: 20px;">
+            <svg width="100%" height="100%" viewBox="0 0 800 400" style="background: transparent;">
                 <!-- Bloco do motor -->
                 <rect x="200" y="100" width="400" height="200" fill="#444" stroke="#00ffff" stroke-width="2" rx="10"/>
                 
@@ -976,8 +958,8 @@ elif st.session_state.current_page == "visualizador 3d":
                 <rect x="250" y="50" width="300" height="50" fill="#555" stroke="#888" stroke-width="1" rx="5"/>
                 
                 <!-- Cilindro 1 (destacado) -->
-                <rect id="cilindro1" x="280" y="130" width="50" height="80" fill="#666" stroke="#ffff00" stroke-width="3" rx="3"/>
-                <text x="295" y="175" fill="#ffff00" font-size="12">C1</text>
+                <rect x="280" y="130" width="50" height="80" fill="#666" stroke="#ffff00" stroke-width="3" rx="3"/>
+                <text x="295" y="175" fill="#ffff00" font-size="12" font-family="Roboto Mono">C1</text>
                 
                 <!-- Cilindro 2 -->
                 <rect x="360" y="130" width="50" height="80" fill="#666" stroke="#888" stroke-width="1" rx="3"/>
@@ -991,24 +973,13 @@ elif st.session_state.current_page == "visualizador 3d":
                 <rect x="520" y="130" width="50" height="80" fill="#666" stroke="#888" stroke-width="1" rx="3"/>
                 <text x="535" y="175" fill="white" font-size="12">C4</text>
                 
-                <!-- Bobina destacada (se houver componente selecionado) -->
-                <circle cx="305" cy="70" r="15" fill="#ffaa00" stroke="#ffff00" stroke-width="3" filter="url(#glow)"/>
-                <text x="298" y="75" fill="black" font-size="10">BOB</text>
+                <!-- Bobina destacada -->
+                <circle cx="305" cy="70" r="15" fill="#ffaa00" stroke="#ffff00" stroke-width="3"/>
+                <text x="298" y="75" fill="black" font-size="10" font-family="Roboto Mono">BOB</text>
                 
                 <!-- Seta indicadora -->
                 <line x1="305" y1="70" x2="250" y2="30" stroke="#ffff00" stroke-width="2" stroke-dasharray="5,3"/>
-                <text x="200" y="20" fill="#ffff00" font-size="12">Componente afetado</text>
-                
-                <!-- Efeito de brilho -->
-                <defs>
-                    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                        <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-                        <feMerge>
-                            <feMergeNode in="offsetblur" />
-                            <feMergeNode in="SourceGraphic" />
-                        </feMerge>
-                    </filter>
-                </defs>
+                <text x="200" y="20" fill="#ffff00" font-size="12" font-family="Roboto Mono">Componente afetado</text>
             </svg>
         </div>
         """, unsafe_allow_html=True)
@@ -1036,7 +1007,6 @@ elif st.session_state.current_page == "visualizador 3d":
         if st.session_state.selected_component:
             comp = st.session_state.selected_component
             
-            # Informações do componente
             st.markdown(f"""
             <div class="cliente-card">
                 <h4 style="color:#00ffff; margin-bottom:15px;">{comp}</h4>
@@ -1118,7 +1088,6 @@ elif st.session_state.current_page == "modo cliente":
                 
                 severidade_max = max(severidade_max, severidade)
                 
-                # Cor baseada na severidade
                 cor_titulo = "#ff0000" if severidade > 0.7 else "#ffaa00" if severidade > 0.4 else "#00ff00"
                 
                 st.markdown(f"""
@@ -1181,21 +1150,19 @@ elif st.session_state.current_page == "modo cliente":
             # Área de assinatura
             st.markdown("### ✍️ ASSINATURA DIGITAL")
             
-            # Simulação de canvas de assinatura
-            assinatura_html = """
-            <div class="assinatura-area" id="assinaturaCanvas">
-                <canvas class="assinatura-canvas" width="300" height="120" style="width:100%; height:120px;"></canvas>
+            st.markdown("""
+            <div class="assinatura-area">
+                <div style="text-align:center; line-height:120px; color:#888;">
+                    Clique e arraste para assinar
+                </div>
             </div>
-            """
-            
-            st.markdown(assinatura_html, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
             
             if st.button("✍️ ASSINAR E AUTORIZAR", use_container_width=True):
                 st.session_state.assinatura = True
                 st.session_state.log.append("> Cliente autorizou reparo via assinatura digital")
                 st.success("✅ Autorização registrada com sucesso!")
                 
-                # Gerar orçamento automático
                 if st.session_state.diagnosis_result:
                     part_info = st.session_state.orcamento.consultar_peca(
                         st.session_state.vehicle_info['vin'],
@@ -1224,81 +1191,52 @@ elif st.session_state.current_page == "modo cliente":
 elif st.session_state.current_page == "diagnóstico ia":
     st.markdown("## 🤖 DIAGNÓSTICO AVANÇADO COM IA")
     
-    col1, col2 = st.columns([1, 1])
-    
-    with col1:
-        st.markdown("### 🔍 ANALISADOR PREDITIVO")
+    if st.session_state.dtcs:
+        dtc_options = [dtc['code'] for dtc in st.session_state.dtcs]
+        selected_dtc = st.selectbox("Selecione o DTC para análise detalhada", dtc_options)
         
-        if st.session_state.dtcs:
-            dtc_options = [dtc['code'] for dtc in st.session_state.dtcs]
-            selected_dtc = st.selectbox("Selecione o DTC para análise detalhada", dtc_options)
-            
-            if st.button("🔮 EXECUTAR ANÁLISE COMPLETA", use_container_width=True):
-                with st.spinner("IA analisando padrões históricos e dados em tempo real..."):
-                    time.sleep(3)
-                    dtc_atual = next((d for d in st.session_state.dtcs if d['code'] == selected_dtc), None)
-                    
-                    live_data_for_ia = {
-                        'short_term_fuel_trim': st.session_state.live_data.get('short_term_fuel_trim', 0),
-                        'long_term_fuel_trim': st.session_state.live_data.get('long_term_fuel_trim', 0),
-                        'o2_voltage': st.session_state.live_data.get('o2', 0),
-                        'maf': st.session_state.live_data.get('maf', 0),
-                        'rpm': st.session_state.live_data.get('rpm', 0),
-                        'engine_load': st.session_state.live_data.get('engine_load', 0)
-                    }
-                    
-                    resultado = st.session_state.copiloto.diagnose(
-                        selected_dtc,
-                        live_data_for_ia,
-                        st.session_state.live_history[-20:] if st.session_state.live_history else [],
-                        st.session_state.vehicle_info
-                    )
-                    st.session_state.diagnosis_result = resultado
-                    
-            if st.session_state.diagnosis_result:
-                res = st.session_state.diagnosis_result
+        if st.button("🔮 EXECUTAR ANÁLISE COMPLETA", use_container_width=True):
+            with st.spinner("IA analisando padrões históricos e dados em tempo real..."):
+                time.sleep(3)
+                dtc_atual = next((d for d in st.session_state.dtcs if d['code'] == selected_dtc), None)
                 
-                st.markdown(f"""
-                <div class="copilot-card-modern" style="margin-top:20px;">
-                    <div class="copilot-title-modern">📊 RESULTADO DA ANÁLISE</div>
-                    <div style="margin:15px 0;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                            <span>DTC:</span>
-                            <span style="color:#00ffff;">{res['dtc']}</span>
-                        </div>
-                        <div style="display:flex; justify-content:space-between;">
-                            <span>Confiança:</span>
-                            <span style="color:#00ff00;">{res['confidence_score']}%</span>
-                        </div>
+                live_data_for_ia = {
+                    'short_term_fuel_trim': st.session_state.live_data.get('short_term_fuel_trim', 0),
+                    'long_term_fuel_trim': st.session_state.live_data.get('long_term_fuel_trim', 0),
+                    'o2_voltage': st.session_state.live_data.get('o2', 0),
+                    'maf': st.session_state.live_data.get('maf', 0),
+                    'rpm': st.session_state.live_data.get('rpm', 0),
+                    'engine_load': st.session_state.live_data.get('engine_load', 0)
+                }
+                
+                resultado = st.session_state.copiloto.diagnose(
+                    selected_dtc,
+                    live_data_for_ia,
+                    st.session_state.live_history[-20:] if st.session_state.live_history else [],
+                    st.session_state.vehicle_info
+                )
+                st.session_state.diagnosis_result = resultado
+                
+        if st.session_state.diagnosis_result:
+            res = st.session_state.diagnosis_result
+            
+            st.markdown(f"""
+            <div class="copilot-card-modern" style="margin-top:20px;">
+                <div class="copilot-title-modern">📊 RESULTADO DA ANÁLISE</div>
+                <div style="margin:15px 0;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <span>DTC:</span>
+                        <span style="color:#00ffff;">{res['dtc']}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>Confiança:</span>
+                        <span style="color:#00ff00;">{res['confidence_score']}%</span>
                     </div>
                 </div>
-                """, unsafe_allow_html=True)
-        else:
-            st.info("Execute um escaneamento primeiro para obter DTCs")
-    
-    with col2:
-        st.markdown("### 📈 CORRELAÇÃO DE DADOS")
-        
-        if st.session_state.live_history:
-            hist_df = pd.DataFrame(st.session_state.live_history[-30:])
-            
-            fig = make_subplots(rows=3, cols=1, shared_xaxes=True,
-                                subplot_titles=('RPM', 'STFT', 'O2 Sensor'))
-            
-            fig.add_trace(go.Scatter(y=hist_df['rpm'], line=dict(color='#00ffff')), row=1, col=1)
-            fig.add_trace(go.Scatter(y=hist_df.get('short_term_fuel_trim', [0]*len(hist_df)), 
-                                     line=dict(color='#ffff00')), row=2, col=1)
-            fig.add_trace(go.Scatter(y=hist_df.get('o2', [0]*len(hist_df)), 
-                                     line=dict(color='#ff0000')), row=3, col=1)
-            
-            fig.update_layout(height=400, showlegend=False,
-                             paper_bgcolor='#1a1d24',
-                             plot_bgcolor='#1a1d24',
-                             font=dict(color='white'))
-            
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info("Aguardando dados em tempo real...")
+            </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.info("Execute um escaneamento primeiro para obter DTCs")
 
 # =============================================
 # ORÇAMENTOS
@@ -1347,7 +1285,6 @@ elif st.session_state.current_page == "orçamentos":
             with col2:
                 st.markdown("### 📄 GERAR ORÇAMENTO")
                 
-                # Seleciona fornecedor recomendado
                 if part_info['recommended_supplier']:
                     rec = part_info['recommended_supplier']
                     
@@ -1373,7 +1310,6 @@ elif st.session_state.current_page == "orçamentos":
                     st.success("✅ Orçamento gerado com sucesso!")
                 
                 if st.session_state.orcamento_atual:
-                    st.markdown("### 📋 RESUMO DO ORÇAMENTO")
                     orc = st.session_state.orcamento_atual
                     
                     st.markdown(f"""
