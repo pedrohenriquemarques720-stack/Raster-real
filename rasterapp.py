@@ -1,4 +1,4 @@
-# app.py - Interface Original (Tudo na mesma tela, sem rolagem)
+# app.py - Interface Original (Tudo na mesma tela)
 
 import streamlit as st
 import pandas as pd
@@ -12,6 +12,7 @@ from datetime import datetime
 from obd_scanner import OBDScannerRevolucionario as OBDScannerPro
 from dtc_database import DTCDatabase
 from vehicle_profiles import VehicleDatabase
+from co_piloto_oficina import CoPilotoOficina
 
 # Configuração da página
 st.set_page_config(
@@ -22,7 +23,7 @@ st.set_page_config(
 )
 
 # =============================================
-# CSS - INTERFACE ORIGINAL (SEM ROLAGEM)
+# CSS - INTERFACE ORIGINAL (TUDO NA MESMA TELA)
 # =============================================
 st.markdown("""
 <style>
@@ -37,23 +38,23 @@ st.markdown("""
     .stApp {
         background: #1a1a1a;
         color: #ffffff;
-        padding: 5px;
+        padding: 10px;
     }
     
     .main > .block-container {
         max-width: 100%;
         margin: 0;
-        padding: 5px !important;
+        padding: 10px !important;
         background: #2d2d2d;
-        border-radius: 8px;
+        border-radius: 10px;
     }
     
     /* Header */
     .header {
         background: linear-gradient(135deg, #0047AB, #002B5C);
-        padding: 8px 15px;
-        border-radius: 6px;
-        margin-bottom: 8px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        margin-bottom: 15px;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -62,15 +63,15 @@ st.markdown("""
     .logo {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 12px;
     }
     
     .logo-icon {
-        font-size: 24px;
+        font-size: 32px;
     }
     
     .logo-text h1 {
-        font-size: 18px;
+        font-size: 22px;
         font-weight: bold;
         color: #fff;
         margin: 0;
@@ -78,35 +79,35 @@ st.markdown("""
     
     .logo-text p {
         color: #00ffff;
-        font-size: 9px;
+        font-size: 10px;
         margin: 0;
     }
     
     .device-status {
         background: #000;
-        padding: 4px 10px;
-        border-radius: 20px;
+        padding: 6px 15px;
+        border-radius: 30px;
         border: 1px solid #00ffff;
         color: #00ff00;
         font-family: 'Courier New', monospace;
-        font-size: 10px;
+        font-size: 12px;
     }
     
     /* Connection Bar */
     .connection-bar {
         background: #1a1a1a;
-        padding: 8px 12px;
-        border-radius: 6px;
-        margin-bottom: 8px;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 15px;
         display: flex;
-        gap: 10px;
+        gap: 15px;
         align-items: center;
-        border-left: 4px solid #ff6600;
+        border-left: 5px solid #ff6600;
     }
     
     .conn-info {
         display: flex;
-        gap: 15px;
+        gap: 20px;
         flex: 1;
     }
     
@@ -116,12 +117,12 @@ st.markdown("""
     }
     
     .conn-label {
-        font-size: 9px;
+        font-size: 11px;
         color: #888;
     }
     
     .conn-value {
-        font-size: 11px;
+        font-size: 13px;
         font-weight: bold;
         color: #ff6600;
         font-family: 'Courier New', monospace;
@@ -130,12 +131,12 @@ st.markdown("""
     .conn-button {
         background: #00ff00;
         color: #000;
-        padding: 5px 15px;
+        padding: 8px 20px;
         border: none;
-        border-radius: 4px;
+        border-radius: 5px;
         font-weight: bold;
         cursor: pointer;
-        font-size: 11px;
+        font-size: 13px;
         white-space: nowrap;
     }
     
@@ -144,29 +145,29 @@ st.markdown("""
         color: white;
     }
     
-    /* MAIN GRID - 3 COLUNAS ORIGINAIS */
+    /* MAIN GRID - 3 COLUNAS */
     .main-grid {
         display: grid;
         grid-template-columns: 300px 1fr 300px;
-        gap: 8px;
-        margin-top: 5px;
+        gap: 10px;
+        margin-top: 10px;
     }
     
     /* PANELS */
     .left-panel, .center-panel, .right-panel {
         background: #1a1a1a;
-        border-radius: 6px;
-        padding: 8px;
+        border-radius: 8px;
+        padding: 12px;
     }
     
     /* Panel Title */
     .panel-title {
         color: #ff6600;
-        font-size: 11px;
+        font-size: 13px;
         font-weight: bold;
-        margin-bottom: 6px;
-        padding-bottom: 2px;
-        border-bottom: 1px solid #ff6600;
+        margin-bottom: 10px;
+        padding-bottom: 3px;
+        border-bottom: 2px solid #ff6600;
         text-transform: uppercase;
     }
     
@@ -174,9 +175,9 @@ st.markdown("""
     .info-row {
         display: flex;
         justify-content: space-between;
-        padding: 3px 0;
+        padding: 5px 0;
         border-bottom: 1px solid #333;
-        font-size: 10px;
+        font-size: 12px;
     }
     
     .info-label {
@@ -192,39 +193,39 @@ st.markdown("""
     /* DTC List */
     .dtc-item {
         background: #330000;
-        border-left: 2px solid #ff0000;
-        padding: 5px;
-        margin-bottom: 4px;
-        font-size: 10px;
+        border-left: 3px solid #ff0000;
+        padding: 8px;
+        margin-bottom: 5px;
+        font-size: 12px;
     }
     
     .dtc-code {
         color: #ff6666;
         font-weight: bold;
-        font-size: 11px;
+        font-size: 13px;
     }
     
     .dtc-desc {
-        font-size: 9px;
+        font-size: 11px;
         color: #aaa;
     }
     
     /* Function Tabs */
     .function-tabs {
         display: flex;
-        gap: 3px;
-        margin-bottom: 8px;
+        gap: 4px;
+        margin-bottom: 10px;
         background: #333;
-        padding: 3px;
-        border-radius: 4px;
+        padding: 4px;
+        border-radius: 5px;
     }
     
     .tab {
         flex: 1;
-        padding: 4px 2px;
+        padding: 6px 4px;
         text-align: center;
-        border-radius: 3px;
-        font-size: 9px;
+        border-radius: 4px;
+        font-size: 11px;
         background: #333;
         color: white;
         border: none;
@@ -241,24 +242,24 @@ st.markdown("""
     .live-data-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 5px;
+        gap: 6px;
     }
     
     .live-item {
         background: #333;
-        padding: 6px;
-        border-radius: 4px;
-        border-left: 2px solid #00ff00;
+        padding: 8px;
+        border-radius: 5px;
+        border-left: 3px solid #00ff00;
     }
     
     .live-label {
-        font-size: 8px;
+        font-size: 9px;
         color: #888;
         margin-bottom: 2px;
     }
     
     .live-value {
-        font-size: 13px;
+        font-size: 14px;
         font-weight: bold;
         color: #00ff00;
         font-family: 'Courier New', monospace;
@@ -271,7 +272,7 @@ st.markdown("""
     }
     
     .live-graph {
-        height: 2px;
+        height: 3px;
         background: #444;
         margin-top: 4px;
         border-radius: 1px;
@@ -286,12 +287,12 @@ st.markdown("""
     /* Flashing Area */
     .flashing-area {
         text-align: center;
-        padding: 5px;
+        padding: 8px;
     }
     
     .file-select {
         background: #333;
-        padding: 10px;
+        padding: 12px;
         border-radius: 5px;
         border: 1px dashed #ff6600;
         margin-bottom: 8px;
@@ -327,22 +328,22 @@ st.markdown("""
         font-size: 9px;
         padding: 5px;
         background: #331900;
-        border-radius: 4px;
+        border-radius: 5px;
     }
     
     /* Oscilloscope */
     .scope-channel {
         background: #000;
-        padding: 5px;
-        border-radius: 4px;
-        margin-bottom: 5px;
+        padding: 6px;
+        border-radius: 5px;
+        margin-bottom: 6px;
     }
     
     .channel-header {
         display: flex;
         justify-content: space-between;
         margin-bottom: 3px;
-        font-size: 8px;
+        font-size: 9px;
     }
     
     .channel-1 { color: #ffff00; }
@@ -371,31 +372,31 @@ st.markdown("""
     }
     
     @keyframes wave {
-        0% { transform: translateX(0) translateY(0); }
-        100% { transform: translateX(-100%) translateY(0); }
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-100%); }
     }
     
     @keyframes wave2 {
-        0% { transform: translateX(0) translateY(0); }
-        100% { transform: translateX(-100%) translateY(0); }
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-100%); }
     }
     
     /* Bottom Bar */
     .bottom-bar {
-        margin-top: 8px;
+        margin-top: 10px;
         background: #1a1a1a;
-        padding: 5px 10px;
-        border-radius: 4px;
+        padding: 6px 12px;
+        border-radius: 5px;
         display: flex;
         justify-content: space-between;
         font-family: 'Courier New', monospace;
-        font-size: 9px;
+        font-size: 10px;
         color: #00ff00;
     }
     
     .log-messages {
         display: flex;
-        gap: 10px;
+        gap: 12px;
     }
     
     .log-entry {
@@ -414,24 +415,24 @@ st.markdown("""
     /* Botões */
     .stButton > button {
         width: 100%;
-        padding: 4px 6px !important;
-        font-size: 9px !important;
+        padding: 5px 8px !important;
+        font-size: 11px !important;
         background-color: #ff6600 !important;
         color: white !important;
         font-weight: bold !important;
         border: none !important;
-        border-radius: 3px !important;
-        margin: 1px 0 !important;
-        min-height: 24px;
+        border-radius: 4px !important;
+        margin: 2px 0 !important;
+        min-height: 28px;
     }
     
     /* Colunas */
     div[data-testid="column"] {
-        padding: 0 2px !important;
+        padding: 0 3px !important;
     }
     
     div[data-testid="stVerticalBlock"] {
-        gap: 2px !important;
+        gap: 3px !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -441,6 +442,7 @@ st.markdown("""
 # =============================================
 if 'scanner' not in st.session_state:
     st.session_state.scanner = OBDScannerPro()
+    st.session_state.copiloto = CoPilotoOficina()
     st.session_state.dtc_db = DTCDatabase()
     st.session_state.vehicle_db = VehicleDatabase()
     st.session_state.connected = False
@@ -468,9 +470,14 @@ if 'scanner' not in st.session_state:
         'battery': 13.8,
         'engine_load': 23,
         'o2': 0.78,
-        'timing': 12
+        'timing': 12,
+        'short_term_fuel_trim': 2.5,
+        'long_term_fuel_trim': 3.2,
+        'maf': 3.8
     }
+    st.session_state.live_history = []
     st.session_state.log = ["> Sistema pronto"]
+    st.session_state.diagnosis_result = None
 
 # =============================================
 # HEADER
@@ -496,12 +503,13 @@ st.markdown("""
 col1, col2 = st.columns([4, 1])
 
 with col1:
+    vehicle_display = f"{st.session_state.vehicle_info.get('model', '---')} {st.session_state.vehicle_info.get('year', '')}"
     st.markdown(f"""
     <div class="connection-bar">
         <div class="conn-info">
             <div class="conn-item">
                 <span class="conn-label">VEÍCULO</span>
-                <span class="conn-value">{st.session_state.vehicle_info.get('model', '---')}</span>
+                <span class="conn-value">{vehicle_display}</span>
             </div>
             <div class="conn-item">
                 <span class="conn-label">PROTOCOLO</span>
@@ -516,26 +524,32 @@ with col1:
     """, unsafe_allow_html=True)
 
 with col2:
-    if st.button("🔌 CONECTAR" if not st.session_state.connected else "🔌 DESCONECTAR"):
-        st.session_state.connected = not st.session_state.connected
-        if st.session_state.connected:
-            st.session_state.vehicle_info = {
-                'manufacturer': 'Volkswagen',
-                'model': 'Gol 1.6',
-                'year': '2024',
-                'engine': 'EA211',
-                'transmission': 'Manual',
-                'vin': '9BWZZZ377VT004251',
-                'ecu': 'BOSCH ME17.9.65',
-                'version': '03H906023AB',
-                'protocol': 'CAN-BUS',
-                'km': '15.234 km'
-            }
-            st.session_state.log.append("> Conectado")
-        st.rerun()
+    if not st.session_state.connected:
+        if st.button("🔌 CONECTAR"):
+            with st.spinner("Conectando..."):
+                st.session_state.connected = True
+                st.session_state.vehicle_info = {
+                    'manufacturer': 'Volkswagen',
+                    'model': 'Gol 1.6',
+                    'year': '2024',
+                    'engine': 'EA211',
+                    'transmission': 'Manual',
+                    'vin': '9BWZZZ377VT004251',
+                    'ecu': 'BOSCH ME17.9.65',
+                    'version': '03H906023AB',
+                    'protocol': 'CAN-BUS',
+                    'km': '15.234 km'
+                }
+                st.session_state.log.append("> Conectado")
+                st.rerun()
+    else:
+        if st.button("🔌 DESCONECTAR"):
+            st.session_state.connected = False
+            st.session_state.log.append("> Desconectado")
+            st.rerun()
 
 # =============================================
-# MAIN GRID - 3 COLUNAS (TUDO NA TELA)
+# MAIN GRID - 3 COLUNAS
 # =============================================
 col_left, col_center, col_right = st.columns([1, 1.5, 1])
 
@@ -562,14 +576,24 @@ with col_left:
         </div>
         """, unsafe_allow_html=True)
     
-    st.markdown('<div class="panel-title" style="margin-top: 8px;">⚠️ DTCs</div>', unsafe_allow_html=True)
+    st.markdown('<div class="panel-title" style="margin-top: 10px;">⚠️ CÓDIGOS DE FALHA</div>', unsafe_allow_html=True)
     
-    if st.button("🔍 ESCANEAR", key="scan_dtc", use_container_width=True):
-        st.session_state.dtcs = [
-            {'code': 'P0301', 'desc': 'Falha cilindro 1'},
-            {'code': 'P0420', 'desc': 'Catalisador'}
-        ]
-        st.session_state.log.append("> Escaneado")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🔍 ESCANEAR", key="scan_dtc", use_container_width=True):
+            with st.spinner("Escaneando..."):
+                time.sleep(1)
+                st.session_state.dtcs = [
+                    {'code': 'P0301', 'desc': 'Falha cilindro 1', 'system': 'Motor'},
+                    {'code': 'P0420', 'desc': 'Catalisador', 'system': 'Emissões'},
+                    {'code': 'P0171', 'desc': 'Mistura pobre', 'system': 'Combustível'}
+                ]
+                st.session_state.log.append("> Escaneamento concluído")
+    
+    with col2:
+        if st.button("✅ LIMPAR", key="clear_dtc", use_container_width=True):
+            st.session_state.dtcs = []
+            st.session_state.log.append("> Falhas limpas")
     
     if st.session_state.dtcs:
         for dtc in st.session_state.dtcs:
@@ -580,7 +604,39 @@ with col_left:
             </div>
             """, unsafe_allow_html=True)
     else:
-        st.markdown("<div style='color:#666; font-size:9px; padding:5px;'>Nenhum código</div>", unsafe_allow_html=True)
+        st.markdown("<div style='color:#666; padding:5px;'>Nenhum código</div>", unsafe_allow_html=True)
+    
+    # Diagnóstico Rápido
+    if st.session_state.dtcs:
+        st.markdown('<div class="panel-title" style="margin-top: 10px;">🤖 CO-PILOTO IA</div>', unsafe_allow_html=True)
+        
+        if st.button("🔮 ANALISAR DTCs", use_container_width=True):
+            with st.spinner("Analisando padrões..."):
+                # Pega o primeiro DTC para diagnóstico
+                dtc_atual = st.session_state.dtcs[0]['code']
+                
+                # Executa diagnóstico com IA
+                resultado = st.session_state.copiloto.diagnose(
+                    dtc_atual,
+                    st.session_state.live_data,
+                    st.session_state.live_history[-10:] if st.session_state.live_history else [],
+                    st.session_state.vehicle_info
+                )
+                st.session_state.diagnosis_result = resultado
+                st.session_state.log.append(f"> IA analisou {dtc_atual}")
+        
+        if st.session_state.diagnosis_result:
+            res = st.session_state.diagnosis_result
+            st.markdown(f"""
+            <div style='background:#002800; padding:8px; border-radius:5px; margin-top:5px;'>
+                <span style='color:#00ff00; font-weight:bold;'>🎯 PROBABILIDADES:</span>
+            """, unsafe_allow_html=True)
+            
+            for p in res['probabilities'][:2]:
+                st.markdown(f"<div style='font-size:11px; margin:3px 0;'>• {p['component']}: {p['probability']}%</div>", unsafe_allow_html=True)
+            
+            if res['final_recommendation']['action_plan']:
+                st.markdown(f"<div style='color:#ff6600; font-size:11px; margin-top:5px;'>{res['final_recommendation']['action_plan'][0]}</div>", unsafe_allow_html=True)
 
 # =============================================
 # COLUNA CENTRAL - Dados em Tempo Real
@@ -639,46 +695,77 @@ with col_center:
             <div class="live-graph"><div class="graph-fill" style="width:{data['timing']*4}%"></div></div>
         </div>
         """, unsafe_allow_html=True)
+    
+    # Parâmetros adicionais para diagnóstico
+    if st.session_state.connected:
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("STFT", f"{data.get('short_term_fuel_trim', 0)}%", delta=None)
+        with col2:
+            st.metric("LTFT", f"{data.get('long_term_fuel_trim', 0)}%", delta=None)
 
 # =============================================
-# COLUNA DIREITA - Controles e Osciloscópio
+# COLUNA DIREITA - Osciloscópio e Controles
 # =============================================
 with col_right:
     st.markdown('<div class="panel-title">⚡ CONTROLES</div>', unsafe_allow_html=True)
     
-    if st.button("✅ LIMPAR FALHAS", use_container_width=True):
-        st.session_state.dtcs = []
-        st.session_state.log.append("> Falhas limpas")
+    # Flash / Reprogramação
+    if st.button("⚡ FLASH ECU", use_container_width=True):
+        st.session_state.log.append("> Iniciando flash...")
+        st.session_state.progress = 0
+        progress_bar = st.progress(0)
+        for i in range(0, 101, 10):
+            st.session_state.progress = i
+            progress_bar.progress(i/100)
+            time.sleep(0.1)
+        st.session_state.log.append("> Flash concluído")
+        st.rerun()
     
-    st.markdown('<div class="panel-title" style="margin-top:8px;">📊 OSCILOSCÓPIO</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="progress-bar">
+        <div class="progress-fill" style="width:{st.session_state.progress}%"></div>
+        <div class="progress-text">{st.session_state.progress}%</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Osciloscópio
+    st.markdown('<div class="panel-title" style="margin-top:10px;">📊 OSCILOSCÓPIO</div>', unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("▶️", key="start_osc"):
+        if st.button("▶️ INICIAR", key="start_osc"):
             st.session_state.osc_running = True
     with col2:
-        if st.button("⏹️", key="stop_osc"):
+        if st.button("⏹️ PARAR", key="stop_osc"):
             st.session_state.osc_running = False
     
     st.markdown("""
     <div class="scope-channel">
-        <div class="channel-header"><span class="channel-1">CH1</span><span class="channel-1">0.45V</span></div>
+        <div class="channel-header">
+            <span class="channel-1">CH1 - DETONAÇÃO</span>
+            <span class="channel-1">0.45V</span>
+        </div>
         <div class="waveform"><div class="wave-line"></div></div>
     </div>
     <div class="scope-channel">
-        <div class="channel-header"><span class="channel-2">CH2</span><span class="channel-2">12.4V</span></div>
+        <div class="channel-header">
+            <span class="channel-2">CH2 - INJEÇÃO</span>
+            <span class="channel-2">12.4V</span>
+        </div>
         <div class="waveform"><div class="wave-line wave-line2"></div></div>
     </div>
     """, unsafe_allow_html=True)
     
-    st.markdown('<div class="panel-title" style="margin-top:8px;">🔧 FERRAMENTAS</div>', unsafe_allow_html=True)
+    # Ferramentas Rápidas
+    st.markdown('<div class="panel-title" style="margin-top:10px;">🔧 FERRAMENTAS</div>', unsafe_allow_html=True)
     
-    tools = ["Atuador", "Injetores", "ABS", "Reset"]
+    tools = ["Atuador", "Injetores", "Sangria", "Reset"]
     cols = st.columns(2)
     for i, tool in enumerate(tools):
         with cols[i%2]:
-            if st.button(tool, key=f"t{i}", use_container_width=True):
-                st.session_state.log.append(f"> {tool}")
+            if st.button(tool, key=f"tool_{i}", use_container_width=True):
+                st.session_state.log.append(f"> Executando: {tool}")
 
 # =============================================
 # BOTTOM BAR
@@ -700,7 +787,8 @@ st.markdown(f"""
 # ATUALIZAÇÃO DE DADOS
 # =============================================
 if st.session_state.connected:
-    st.session_state.live_data = {
+    # Atualiza dados
+    novo_dado = {
         'rpm': random.randint(750, 3500),
         'speed': random.randint(0, 120),
         'temp': random.randint(82, 98),
@@ -708,7 +796,16 @@ if st.session_state.connected:
         'battery': round(12 + random.random() * 2, 1),
         'engine_load': random.randint(15, 55),
         'o2': round(0.7 + random.random() * 0.2, 2),
-        'timing': random.randint(8, 22)
+        'timing': random.randint(8, 22),
+        'short_term_fuel_trim': round(random.uniform(-5, 15), 1),
+        'long_term_fuel_trim': round(random.uniform(-8, 18), 1),
+        'maf': round(2.5 + random.random() * 3, 1)
     }
+    
+    st.session_state.live_data = novo_dado
+    st.session_state.live_history.append(novo_dado)
+    if len(st.session_state.live_history) > 50:
+        st.session_state.live_history.pop(0)
+    
     time.sleep(0.5)
     st.rerun()
