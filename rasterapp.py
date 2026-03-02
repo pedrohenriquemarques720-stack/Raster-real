@@ -1,144 +1,63 @@
-# rasterapp.py - Versão otimizada para Streamlit Cloud
+# app.py - Backend para Streamlit
 
 import streamlit as st
-import pandas as pd
 import time
 import random
 from datetime import datetime
-import json
 
 # Configuração da página
 st.set_page_config(
-    page_title="AUTOMOTIVE PRO - Diagnóstico Profissional",
+    page_title="Scanner Automotivo Pro",
     page_icon="🔧",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
 # CSS personalizado
 st.markdown("""
 <style>
-    /* Tema automotivo profissional */
-    .stApp {
-        background-color: #0a0c10;
+    /* Esconde elementos padrão do Streamlit */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    .stDeployButton {display:none;}
+    
+    /* Ajustes de layout */
+    .block-container {
+        padding-top: 1rem;
+        padding-bottom: 0rem;
+        max-width: 100%;
     }
     
-    /* Header com gradiente */
-    .header-gradient {
-        background: linear-gradient(135deg, #ff6600, #00b0ff);
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-    }
-    
-    .main-title {
-        color: white;
-        font-size: 42px;
-        font-weight: bold;
-        text-align: center;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    }
-    
-    /* Cards de métricas */
+    /* Cards */
     .metric-card {
-        background: linear-gradient(145deg, #1a1d24, #0f1217);
-        border: 2px solid #ff6600;
-        border-radius: 15px;
-        padding: 25px;
-        margin: 10px 0;
-        box-shadow: 0 10px 20px rgba(255,102,0,0.2);
-        transition: transform 0.3s;
-    }
-    
-    .metric-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 30px rgba(255,102,0,0.3);
+        background: #1a1d24;
+        border: 1px solid #ff6600;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        margin: 5px;
     }
     
     .metric-value {
-        font-size: 54px;
+        font-size: 36px;
         font-weight: bold;
         color: #ff6600;
-        text-align: center;
         font-family: 'Courier New', monospace;
     }
     
     .metric-label {
-        color: #9aa4b8;
-        font-size: 18px;
-        text-align: center;
-        margin-top: 10px;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-    }
-    
-    .metric-unit {
-        color: #666;
+        color: #888;
         font-size: 14px;
-        text-align: center;
     }
     
-    /* Cards de informação */
-    .info-card {
-        background: #1a1d24;
-        border-left: 5px solid #ff6600;
-        padding: 15px;
-        margin: 10px 0;
-        border-radius: 5px;
-    }
-    
-    /* Status LED */
-    .led-red {
-        width: 12px;
-        height: 12px;
-        background-color: #ff3d00;
-        border-radius: 50%;
-        display: inline-block;
-        box-shadow: 0 0 10px #ff3d00;
-        animation: pulse-red 2s infinite;
-    }
-    
-    .led-green {
-        width: 12px;
-        height: 12px;
-        background-color: #00c853;
-        border-radius: 50%;
-        display: inline-block;
-        box-shadow: 0 0 10px #00c853;
-        animation: pulse-green 2s infinite;
-    }
-    
-    @keyframes pulse-red {
-        0% { opacity: 1; }
-        50% { opacity: 0.5; }
-        100% { opacity: 1; }
-    }
-    
-    @keyframes pulse-green {
-        0% { opacity: 1; }
-        50% { opacity: 0.5; }
-        100% { opacity: 1; }
-    }
-    
-    /* DTC Cards */
-    .dtc-card {
-        background: #1a1d24;
-        border-left: 5px solid #ff3d00;
-        padding: 15px;
-        margin: 10px 0;
-        border-radius: 5px;
-    }
-    
-    .dtc-code {
-        color: #ff3d00;
+    /* Status */
+    .status-online {
+        color: #00ff00;
         font-weight: bold;
-        font-size: 20px;
-        font-family: 'Courier New', monospace;
     }
     
-    .dtc-desc {
-        color: white;
-        font-size: 14px;
+    .status-offline {
+        color: #ff0000;
+        font-weight: bold;
     }
     
     /* Botões */
@@ -146,32 +65,11 @@ st.markdown("""
         background-color: #ff6600;
         color: white;
         font-weight: bold;
-        border: none;
-        border-radius: 5px;
-        padding: 10px 20px;
-        transition: all 0.3s;
+        width: 100%;
     }
     
     .stButton > button:hover {
         background-color: #ff8533;
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(255,102,0,0.3);
-    }
-    
-    /* Tabelas */
-    .dataframe {
-        background-color: #1a1d24;
-        color: white;
-    }
-    
-    /* Footer */
-    .footer {
-        text-align: center;
-        color: #666;
-        padding: 20px;
-        font-size: 12px;
-        border-top: 1px solid #333;
-        margin-top: 30px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -181,285 +79,216 @@ st.markdown("""
 # =============================================
 if 'connected' not in st.session_state:
     st.session_state.connected = False
-    st.session_state.vehicle_info = {}
-    st.session_state.dtcs = []
-    st.session_state.data_history = []
-    st.session_state.current_data = {
-        'rpm': 0,
-        'speed': 0,
-        'temp': 85,
-        'battery': 12.5,
-        'oil_pressure': 4.2,
-        'engine_load': 25,
-        'intake_temp': 32,
-        'timing_advance': 12,
-        'o2_sensor': 0.78,
-        'fuel_pressure': 380,
-        'throttle': 18,
-        'maf': 8.5
-    }
+    st.session_state.rpm = 845
+    st.session_state.temp = 89
+    st.session_state.voltage = 13.8
+    st.session_state.oil_pressure = 4.2
+    st.session_state.engine_load = 23
 
 # =============================================
 # HEADER
 # =============================================
-st.markdown("""
-<div class="header-gradient">
-    <div class="main-title">🔧 AUTOMOTIVE PRO</div>
-</div>
-""", unsafe_allow_html=True)
+col1, col2 = st.columns([3, 1])
+
+with col1:
+    st.title("🔧 SCANNER AUTOMOTIVO PRO")
+
+with col2:
+    if st.session_state.connected:
+        st.markdown("### 🟢 **CONECTADO**")
+    else:
+        st.markdown("### 🔴 **DESCONECTADO**")
+
+st.divider()
 
 # =============================================
-# SIDEBAR
+# LAYOUT PRINCIPAL
 # =============================================
-with st.sidebar:
-    st.image("https://via.placeholder.com/300x150/ff6600/000000?text=AUTOMOTIVE+PRO", use_container_width=True)
+col_left, col_center, col_right = st.columns([1.2, 2, 1])
+
+# =============================================
+# COLUNA ESQUERDA - CONEXÃO E INFOS
+# =============================================
+with col_left:
+    st.subheader("🔌 CONEXÃO")
     
-    st.markdown("## 🔌 CONEXÃO")
+    # Controles de conexão
+    port = st.selectbox("Porta", ["COM3", "COM4", "/dev/ttyUSB0"])
+    baud = st.selectbox("Baud Rate", ["38400", "115200", "9600"])
     
-    # Status
-    if st.session_state.connected:
-        st.markdown(f"""
-        <div style="background: #1a1d24; padding: 15px; border-radius: 10px; border-left: 5px solid #00c853;">
-            <span class="led-green"></span> <span class="status-online"> CONECTADO</span><br>
-            <span style="color: #888;">Dispositivo: OBDII-ELM327</span><br>
-            <span style="color: #888;">Protocolo: CAN 500kbps</span>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown(f"""
-        <div style="background: #1a1d24; padding: 15px; border-radius: 10px; border-left: 5px solid #ff3d00;">
-            <span class="led-red"></span> <span style="color: #ff3d00;"> DESCONECTADO</span>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Botão de conexão
-    if st.button("🔌 CONECTAR/DESCONECTAR", use_container_width=True):
+    if st.button("🔌 CONECTAR", use_container_width=True):
         st.session_state.connected = not st.session_state.connected
-        if st.session_state.connected:
-            st.session_state.vehicle_info = {
-                'manufacturer': 'Volkswagen',
-                'model': 'Gol 1.6 MSI',
-                'year': '2024',
-                'engine': 'EA211 16V',
-                'ecu': 'Bosch ME17.9.65',
-                'vin': '9BWZZZ377VT004251',
-                'software': '03H906023AB 3456'
-            }
-        st.rerun()
     
-    st.markdown("---")
-    st.markdown("## ⚡ AÇÕES RÁPIDAS")
+    st.divider()
     
-    col1, col2 = st.columns(2)
+    # Informações do veículo
+    st.subheader("🚗 INFORMAÇÕES DO VEÍCULO")
+    
+    info_data = {
+        "Fabricante": "VOLKSWAGEN",
+        "Modelo": "GOL 1.6 MSI",
+        "Ano": "2024",
+        "Motor": "EA211 (16V)",
+        "Câmbio": "MQ200 (MANUAL)",
+        "KM": "15.234 km",
+        "VIN": "9BWZZZ377VT004251"
+    }
+    
+    for key, value in info_data.items():
+        st.markdown(f"**{key}:** `{value}`")
+    
+    st.divider()
+    
+    # Dados em tempo real
+    st.subheader("📊 DADOS EM TEMPO REAL")
+    
+    if st.session_state.connected:
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-value">{st.session_state.rpm}</div>
+                <div class="metric-label">RPM</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-value">{st.session_state.temp}°C</div>
+                <div class="metric-label">TEMP. MOTOR</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-value">{st.session_state.voltage}V</div>
+                <div class="metric-label">TENSÃO</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-value">{st.session_state.oil_pressure}</div>
+                <div class="metric-label">PRESSÃO ÓLEO</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+# =============================================
+# COLUNA CENTRAL - OSCILOSCÓPIO
+# =============================================
+with col_center:
+    st.subheader("📈 OSCILOSCÓPIO")
+    
+    # Gráfico do osciloscópio
+    import numpy as np
+    import pandas as pd
+    
+    x = np.linspace(0, 100, 500)
+    y1 = np.sin(x * 0.2) * 30 + 50
+    y2 = np.sin(x * 0.1) * 40 + 50
+    
+    osc_data = pd.DataFrame({
+        'CH1': y1,
+        'CH2': y2
+    })
+    
+    st.line_chart(osc_data, height=300)
+    
+    # Controles
+    col1, col2, col3, col4, col5 = st.columns(5)
+    
     with col1:
-        if st.button("📋 LER FALHAS", use_container_width=True):
-            st.session_state.dtcs = [
-                {'code': 'P0301', 'desc': 'Falha de ignição no cilindro 1', 'system': 'Motor', 'severity': 'Alta'},
-                {'code': 'P0420', 'desc': 'Eficiência do catalisador abaixo do limite', 'system': 'Emissões', 'severity': 'Média'}
-            ]
-            st.success("3 códigos de falha encontrados!")
-    
+        st.selectbox("TIME/DIV", ["10ms", "5ms", "20ms"])
     with col2:
-        if st.button("✅ LIMPAR FALHAS", use_container_width=True):
-            st.session_state.dtcs = []
-            st.success("Códigos de falha limpos!")
+        st.selectbox("VOLTS/DIV", ["2V", "1V", "5V"])
+    with col3:
+        st.selectbox("TRIGGER", ["CH1", "CH2", "AUTO"])
+    with col4:
+        st.button("▶ INICIAR", use_container_width=True)
+    with col5:
+        st.button("⏹ PARAR", use_container_width=True)
+
+# =============================================
+# COLUNA DIREITA - CONTROLES
+# =============================================
+with col_right:
+    st.subheader("⚡ CONTROLES")
     
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("📊 DADOS REAIS", use_container_width=True):
-            st.info("Coletando dados em tempo real...")
+    # Botões de ação
+    if st.button("🔍 ESCANEAR VEÍCULO", use_container_width=True):
+        st.success("Veículo identificado: VW GOL 1.6 2024")
     
-    with col2:
-        if st.button("⚡ REPROGRAMAR", use_container_width=True):
-            st.warning("⚠️ INICIANDO REPROGRAMAÇÃO")
+    if st.button("⚠️ LER FALHAS", use_container_width=True):
+        st.warning("3 códigos de falha encontrados")
+        st.code("P0301 - Falha no cilindro 1\nP0420 - Catalisador\nP0171 - Mistura pobre")
+    
+    if st.button("✅ LIMPAR FALHAS", use_container_width=True):
+        st.success("Códigos de falha limpos")
+    
+    if st.button("📊 DADOS REAIS", use_container_width=True):
+        st.info("Coletando dados em tempo real...")
+    
+    if st.button("⚡ REPROGRAMAR ECU", use_container_width=True, type="primary"):
+        with st.spinner("Reprogramando ECU..."):
             progress = st.progress(0)
             for i in range(100):
                 time.sleep(0.05)
                 progress.progress(i + 1)
-            st.success("✅ Reprogramação concluída!")
-
-# =============================================
-# CONTEÚDO PRINCIPAL
-# =============================================
-if st.session_state.connected:
-    # Atualiza dados simulados
-    st.session_state.current_data = {
-        'rpm': random.randint(750, 3500),
-        'speed': random.randint(0, 120),
-        'temp': random.randint(82, 98),
-        'battery': round(12 + random.random() * 2, 1),
-        'oil_pressure': round(3.5 + random.random() * 1.5, 1),
-        'engine_load': random.randint(15, 55),
-        'intake_temp': random.randint(25, 40),
-        'timing_advance': random.randint(8, 22),
-        'o2_sensor': round(0.7 + random.random() * 0.2, 2),
-        'fuel_pressure': random.randint(340, 400),
-        'throttle': random.randint(8, 35),
-        'maf': round(5 + random.random() * 8, 1)
-    }
+        st.success("Reprogramação concluída!")
     
-    # LINHA 1: MÉTRICAS PRINCIPAIS
-    st.markdown("## 📊 PAINEL PRINCIPAL")
+    st.divider()
     
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-value">{st.session_state.current_data['rpm']}</div>
-            <div class="metric-label">RPM</div>
-            <div class="metric-unit">rotações/min</div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-value">{st.session_state.current_data['speed']}</div>
-            <div class="metric-label">VELOCIDADE</div>
-            <div class="metric-unit">km/h</div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-value">{st.session_state.current_data['temp']}°</div>
-            <div class="metric-label">TEMP. MOTOR</div>
-            <div class="metric-unit">°C</div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col4:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-value">{st.session_state.current_data['battery']}V</div>
-            <div class="metric-label">BATERIA</div>
-            <div class="metric-unit">volts</div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown("---")
-    
-    # LINHA 2: INFORMAÇÕES DO VEÍCULO E DADOS DO MOTOR
+    # Botões INICIAR/PARAR
     col1, col2 = st.columns(2)
-    
     with col1:
-        st.markdown("### 🚗 INFORMAÇÕES DO VEÍCULO")
-        info_df = pd.DataFrame({
-            'Parâmetro': ['Fabricante', 'Modelo', 'Ano', 'Motor', 'ECU', 'VIN', 'Software'],
-            'Valor': [
-                st.session_state.vehicle_info.get('manufacturer', 'N/A'),
-                st.session_state.vehicle_info.get('model', 'N/A'),
-                st.session_state.vehicle_info.get('year', 'N/A'),
-                st.session_state.vehicle_info.get('engine', 'N/A'),
-                st.session_state.vehicle_info.get('ecu', 'N/A'),
-                st.session_state.vehicle_info.get('vin', 'N/A'),
-                st.session_state.vehicle_info.get('software', 'N/A')
-            ]
-        })
-        st.dataframe(info_df, use_container_width=True, hide_index=True)
-    
+        if st.button("▶ INICIAR", use_container_width=True):
+            st.session_state.running = True
     with col2:
-        st.markdown("### 🔧 DADOS DO MOTOR")
-        motor_df = pd.DataFrame({
-            'Parâmetro': [
-                'Pressão do Óleo (bar)',
-                'Carga do Motor (%)',
-                'Temp. Ar Admissão (°C)',
-                'Avanço Ignição (°)',
-                'Sonda Lambda (V)',
-                'Pressão Combustível (kPa)',
-                'Posição Acelerador (%)',
-                'Fluxo de Ar (g/s)'
-            ],
-            'Valor': [
-                st.session_state.current_data['oil_pressure'],
-                st.session_state.current_data['engine_load'],
-                st.session_state.current_data['intake_temp'],
-                st.session_state.current_data['timing_advance'],
-                st.session_state.current_data['o2_sensor'],
-                st.session_state.current_data['fuel_pressure'],
-                st.session_state.current_data['throttle'],
-                st.session_state.current_data['maf']
-            ]
-        })
-        st.dataframe(motor_df, use_container_width=True, hide_index=True)
+        if st.button("⏹ PARAR", use_container_width=True):
+            st.session_state.running = False
     
-    st.markdown("---")
+    st.divider()
     
-    # LINHA 3: CÓDIGOS DE FALHA
-    st.markdown("### ⚠️ CÓDIGOS DE FALHA (DTC)")
+    # Últimas leituras
+    st.subheader("📋 ÚLTIMAS LEITURAS")
     
-    if st.session_state.dtcs:
-        for dtc in st.session_state.dtcs:
-            severity_color = {
-                'Alta': '#ff3d00',
-                'Média': '#ffb300',
-                'Baixa': '#00c853'
-            }.get(dtc['severity'], '#888')
-            
-            st.markdown(f"""
-            <div class="dtc-card" style="border-left-color: {severity_color};">
-                <div class="dtc-code">{dtc['code']}</div>
-                <div class="dtc-desc">{dtc['desc']}</div>
-                <div style="color: #888; font-size: 12px; margin-top: 5px;">
-                    Sistema: {dtc['system']} | Gravidade: {dtc['severity']}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-    else:
-        st.info("Nenhum código de falha encontrado. O veículo está em condições normais de operação.")
+    # Simula histórico
+    historico = [
+        "15:23:45 - RPM: 2345",
+        "15:23:44 - RPM: 2310",
+        "15:23:43 - RPM: 2280",
+        "15:23:42 - RPM: 2245",
+        "15:23:41 - RPM: 2210"
+    ]
     
-    # LINHA 4: OSCILOSCÓPIO SIMULADO
-    st.markdown("---")
-    st.markdown("### 📈 OSCILOSCÓPIO - SINAIS EM TEMPO REAL")
-    
-    # Simula dados de osciloscópio
-    import numpy as np
-    import pandas as pd
-    
-    x = np.linspace(0, 100, 100)
-    y1 = np.sin(x * 0.2) * 0.5
-    y2 = np.sin(x * 0.1) * 5 + 7
-    
-    osc_df = pd.DataFrame({
-        'Tempo': x,
-        'CH1 - Sensor Detonação (V)': y1,
-        'CH2 - Sinal Injeção (V)': y2
-    })
-    
-    st.line_chart(osc_df.set_index('Tempo'))
-    
-else:
-    # Tela de boas-vindas quando desconectado
-    st.markdown("""
-    <div style="text-align: center; padding: 100px 20px;">
-        <div style="font-size: 80px; margin-bottom: 20px;">🔧</div>
-        <h2 style="color: #ff6600;">AUTOMOTIVE PRO</h2>
-        <p style="color: #888; font-size: 18px; margin: 20px 0;">
-            Conecte-se a um veículo para iniciar o diagnóstico
-        </p>
-        <p style="color: #666;">
-            • Leitura de dados em tempo real<br>
-            • Diagnóstico de falhas (DTC)<br>
-            • Osciloscópio integrado<br>
-            • Reprogramação de ECU
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    for item in historico:
+        st.caption(item)
 
 # =============================================
 # FOOTER
 # =============================================
-st.markdown("""
-<div class="footer">
-    <p>🔧 AUTOMOTIVE PRO v2.0 - Sistema Profissional de Diagnóstico Automotivo</p>
-    <p>Desenvolvido para mecânicos e preparadores | © 2026</p>
-</div>
-""", unsafe_allow_html=True)
+st.divider()
 
-# Auto-refresh se conectado
+col1, col2 = st.columns([3, 1])
+
+with col1:
+    st.caption("> Sistema pronto | Conectado ao veículo")
+
+with col2:
+    st.caption("CAN BUS: OK | ECU: ONLINE | FW: v2.1.0")
+
+# =============================================
+# ATUALIZAÇÃO AUTOMÁTICA
+# =============================================
 if st.session_state.connected:
+    # Atualiza dados em tempo real
+    st.session_state.rpm = random.randint(750, 3500)
+    st.session_state.temp = random.randint(82, 98)
+    st.session_state.voltage = round(12 + random.random() * 2, 1)
+    st.session_state.oil_pressure = round(3.5 + random.random() * 1.5, 1)
+    st.session_state.engine_load = random.randint(15, 45)
+    
     time.sleep(1)
     st.rerun()
