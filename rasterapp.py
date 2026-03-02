@@ -33,6 +33,85 @@ st.markdown("""
         box-sizing: border-box;
         font-family: 'Segoe UI', 'Arial', sans-serif;
     }
+
+    # Adicione este CSS no início do app.py (dentro do st.markdown)
+
+/* MAIN GRID CORRIGIDO - EXPANDIDO */
+.main-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr 350px;  /* Aumentado de 300px para 350px */
+    gap: 20px;
+    margin-top: 20px;
+}
+
+/* LEFT PANEL - MAIOR */
+.left-panel {
+    background: #1a1a1a;
+    border-radius: 8px;
+    padding: 20px;  /* Aumentado padding */
+    width: 100%;
+}
+
+/* CENTER PANEL - OCUPA ESPAÇO RESTANTE */
+.center-panel {
+    background: #1a1a1a;
+    border-radius: 8px;
+    padding: 20px;
+    width: 100%;
+}
+
+/* RIGHT PANEL - MAIOR */
+.right-panel {
+    background: #1a1a1a;
+    border-radius: 8px;
+    padding: 20px;
+    width: 100%;
+}
+
+/* LIVE DATA GRID - 2 COLUNAS OCUPANDO TUDO */
+.live-data-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;  /* Aumentado gap */
+    width: 100%;
+}
+
+/* LIVE ITEMS - MAIORES */
+.live-item {
+    background: #333;
+    padding: 20px;  /* Aumentado padding */
+    border-radius: 5px;
+    border-left: 3px solid #00ff00;
+    width: 100%;
+}
+
+/* CONNECTION BAR - MAIS LARGA */
+.connection-bar {
+    background: #1a1a1a;
+    padding: 20px;  /* Aumentado padding */
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    border-left: 5px solid #ff6600;
+    width: 100%;
+}
+
+/* CONN INFO - ESPAÇADO */
+.conn-info {
+    display: flex;
+    gap: 40px;  /* Aumentado gap */
+    flex: 1;
+    flex-wrap: wrap;
+}
+
+/* TABLES E BOTÕES - OCUPAM ESPAÇO */
+.stButton > button {
+    width: 100%;
+    padding: 12px !important;  /* Botões maiores */
+    font-size: 14px !important;
+}
     
     .stApp {
         background: #1a1a1a;
@@ -935,3 +1014,4 @@ if st.session_state.connected:
     
     time.sleep(0.5)
     st.rerun()
+
