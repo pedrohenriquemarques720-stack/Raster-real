@@ -1,10 +1,7 @@
-# rasterapp.py - Versão simplificada para Streamlit Cloud
+# rasterapp.py - Versão otimizada para Streamlit Cloud
 
 import streamlit as st
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import pandas as pd
-import numpy as np
 import time
 import random
 from datetime import datetime
@@ -12,7 +9,7 @@ import json
 
 # Configuração da página
 st.set_page_config(
-    page_title="AUTOMOTIVE PRO - Diagnóstico",
+    page_title="AUTOMOTIVE PRO - Diagnóstico Profissional",
     page_icon="🔧",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -21,54 +18,112 @@ st.set_page_config(
 # CSS personalizado
 st.markdown("""
 <style>
-    /* Tema automotivo */
+    /* Tema automotivo profissional */
     .stApp {
         background-color: #0a0c10;
     }
     
-    .main-title {
+    /* Header com gradiente */
+    .header-gradient {
         background: linear-gradient(135deg, #ff6600, #00b0ff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .main-title {
+        color: white;
         font-size: 42px;
         font-weight: bold;
         text-align: center;
-        padding: 20px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
     }
     
+    /* Cards de métricas */
     .metric-card {
-        background: #1a1d24;
-        border: 1px solid #ff6600;
-        border-radius: 10px;
-        padding: 20px;
+        background: linear-gradient(145deg, #1a1d24, #0f1217);
+        border: 2px solid #ff6600;
+        border-radius: 15px;
+        padding: 25px;
         margin: 10px 0;
-        box-shadow: 0 4px 15px rgba(255,102,0,0.2);
+        box-shadow: 0 10px 20px rgba(255,102,0,0.2);
+        transition: transform 0.3s;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(255,102,0,0.3);
     }
     
     .metric-value {
-        font-size: 36px;
+        font-size: 54px;
         font-weight: bold;
         color: #ff6600;
+        text-align: center;
+        font-family: 'Courier New', monospace;
     }
     
     .metric-label {
         color: #9aa4b8;
+        font-size: 18px;
+        text-align: center;
+        margin-top: 10px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+    
+    .metric-unit {
+        color: #666;
         font-size: 14px;
+        text-align: center;
     }
     
-    .status-online {
-        color: #00ff00;
-        font-weight: bold;
+    /* Cards de informação */
+    .info-card {
+        background: #1a1d24;
+        border-left: 5px solid #ff6600;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
     }
     
-    .status-offline {
-        color: #ff0000;
-        font-weight: bold;
+    /* Status LED */
+    .led-red {
+        width: 12px;
+        height: 12px;
+        background-color: #ff3d00;
+        border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 0 10px #ff3d00;
+        animation: pulse-red 2s infinite;
     }
     
+    .led-green {
+        width: 12px;
+        height: 12px;
+        background-color: #00c853;
+        border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 0 10px #00c853;
+        animation: pulse-green 2s infinite;
+    }
+    
+    @keyframes pulse-red {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    
+    @keyframes pulse-green {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    
+    /* DTC Cards */
     .dtc-card {
         background: #1a1d24;
-        border-left: 4px solid #ff3d00;
+        border-left: 5px solid #ff3d00;
         padding: 15px;
         margin: 10px 0;
         border-radius: 5px;
@@ -77,22 +132,46 @@ st.markdown("""
     .dtc-code {
         color: #ff3d00;
         font-weight: bold;
-        font-size: 18px;
+        font-size: 20px;
+        font-family: 'Courier New', monospace;
     }
     
-    .button-connect {
-        background: #ff6600;
+    .dtc-desc {
         color: white;
-        padding: 10px 20px;
-        border-radius: 5px;
-        font-weight: bold;
+        font-size: 14px;
     }
     
+    /* Botões */
+    .stButton > button {
+        background-color: #ff6600;
+        color: white;
+        font-weight: bold;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        transition: all 0.3s;
+    }
+    
+    .stButton > button:hover {
+        background-color: #ff8533;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255,102,0,0.3);
+    }
+    
+    /* Tabelas */
+    .dataframe {
+        background-color: #1a1d24;
+        color: white;
+    }
+    
+    /* Footer */
     .footer {
         text-align: center;
         color: #666;
         padding: 20px;
         font-size: 12px;
+        border-top: 1px solid #333;
+        margin-top: 30px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -103,320 +182,284 @@ st.markdown("""
 if 'connected' not in st.session_state:
     st.session_state.connected = False
     st.session_state.vehicle_info = {}
-    st.session_state.dtc_codes = []
-    st.session_state.live_data = {
+    st.session_state.dtcs = []
+    st.session_state.data_history = []
+    st.session_state.current_data = {
         'rpm': 0,
         'speed': 0,
-        'temp': 0,
-        'battery': 0,
-        'oil_pressure': 0,
-        'engine_load': 0,
-        'intake_temp': 0,
-        'timing_advance': 0,
-        'o2_sensor': 0,
-        'fuel_pressure': 0,
-        'throttle': 0,
-        'maf': 0
-    }
-    st.session_state.history = {
-        'rpm': [],
-        'temp': [],
-        'time': []
+        'temp': 85,
+        'battery': 12.5,
+        'oil_pressure': 4.2,
+        'engine_load': 25,
+        'intake_temp': 32,
+        'timing_advance': 12,
+        'o2_sensor': 0.78,
+        'fuel_pressure': 380,
+        'throttle': 18,
+        'maf': 8.5
     }
 
 # =============================================
-# TÍTULO PRINCIPAL
+# HEADER
 # =============================================
-st.markdown('<div class="main-title">🔧 AUTOMOTIVE PRO</div>', unsafe_allow_html=True)
-st.markdown("---")
+st.markdown("""
+<div class="header-gradient">
+    <div class="main-title">🔧 AUTOMOTIVE PRO</div>
+</div>
+""", unsafe_allow_html=True)
 
 # =============================================
-# SIDEBAR - CONFIGURAÇÕES
+# SIDEBAR
 # =============================================
 with st.sidebar:
-    st.image("https://via.placeholder.com/300x100/ff6600/000000?text=AUTOMOTIVE+PRO", use_container_width=True)
+    st.image("https://via.placeholder.com/300x150/ff6600/000000?text=AUTOMOTIVE+PRO", use_container_width=True)
     
     st.markdown("## 🔌 CONEXÃO")
     
-    # Tipo de conexão
-    conn_type = st.radio(
-        "Tipo de Conexão",
-        ["📱 Bluetooth", "📡 WiFi", "🔌 USB"],
-        horizontal=True
-    )
-    
-    # Lista de dispositivos simulados
-    devices = {
-        "📱 Bluetooth": ["OBDII-ELM327", "OBDII-STN2120", "Scanner Pro BT"],
-        "📡 WiFi": ["OBDII-WiFi-01", "OBDII-WiFi-02"],
-        "🔌 USB": ["COM3 - USB Serial", "COM4 - USB Serial", "/dev/ttyUSB0"]
-    }
-    
-    selected_type = conn_type.split(" ")[1]
-    device_list = devices.get(f"{conn_type}", ["Nenhum dispositivo encontrado"])
-    
-    device = st.selectbox("Dispositivo", device_list)
+    # Status
+    if st.session_state.connected:
+        st.markdown(f"""
+        <div style="background: #1a1d24; padding: 15px; border-radius: 10px; border-left: 5px solid #00c853;">
+            <span class="led-green"></span> <span class="status-online"> CONECTADO</span><br>
+            <span style="color: #888;">Dispositivo: OBDII-ELM327</span><br>
+            <span style="color: #888;">Protocolo: CAN 500kbps</span>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+        <div style="background: #1a1d24; padding: 15px; border-radius: 10px; border-left: 5px solid #ff3d00;">
+            <span class="led-red"></span> <span style="color: #ff3d00;"> DESCONECTADO</span>
+        </div>
+        """, unsafe_allow_html=True)
     
     # Botão de conexão
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🔌 CONECTAR", use_container_width=True):
-            st.session_state.connected = True
+    if st.button("🔌 CONECTAR/DESCONECTAR", use_container_width=True):
+        st.session_state.connected = not st.session_state.connected
+        if st.session_state.connected:
             st.session_state.vehicle_info = {
                 'manufacturer': 'Volkswagen',
-                'model': 'Gol 1.6',
+                'model': 'Gol 1.6 MSI',
                 'year': '2024',
                 'engine': 'EA211 16V',
                 'ecu': 'Bosch ME17.9.65',
                 'vin': '9BWZZZ377VT004251',
-                'protocol': 'CAN 500kbps'
+                'software': '03H906023AB 3456'
             }
-            st.success("✅ Conectado com sucesso!")
-    
-    with col2:
-        if st.button("❌ DESCONECTAR", use_container_width=True):
-            st.session_state.connected = False
-            st.warning("Desconectado")
-    
-    # Status da conexão
-    if st.session_state.connected:
-        st.markdown("### 🟢 Status: **CONECTADO**")
-        st.markdown(f"**Dispositivo:** {device}")
-        st.markdown(f"**Protocolo:** {st.session_state.vehicle_info.get('protocol', 'N/A')}")
-    else:
-        st.markdown("### 🔴 Status: **DESCONECTADO**")
+        st.rerun()
     
     st.markdown("---")
-    
-    # Ações rápidas
     st.markdown("## ⚡ AÇÕES RÁPIDAS")
     
-    if st.button("🔍 ESCANEAR VEÍCULO", use_container_width=True):
-        with st.spinner("Escaneando veículo..."):
-            time.sleep(2)
-            st.success("Veículo identificado!")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("📋 LER FALHAS", use_container_width=True):
+            st.session_state.dtcs = [
+                {'code': 'P0301', 'desc': 'Falha de ignição no cilindro 1', 'system': 'Motor', 'severity': 'Alta'},
+                {'code': 'P0420', 'desc': 'Eficiência do catalisador abaixo do limite', 'system': 'Emissões', 'severity': 'Média'}
+            ]
+            st.success("3 códigos de falha encontrados!")
     
-    if st.button("⚠️ LER FALHAS", use_container_width=True):
-        st.session_state.dtc_codes = [
-            {'code': 'P0301', 'desc': 'Falha de ignição no cilindro 1', 'system': 'Motor', 'severity': 'Alta'},
-            {'code': 'P0420', 'desc': 'Catalisador ineficiente', 'system': 'Emissões', 'severity': 'Média'},
-            {'code': 'P0171', 'desc': 'Mistura pobre', 'system': 'Combustível', 'severity': 'Média'}
-        ]
-        st.warning("3 códigos de falha encontrados!")
+    with col2:
+        if st.button("✅ LIMPAR FALHAS", use_container_width=True):
+            st.session_state.dtcs = []
+            st.success("Códigos de falha limpos!")
     
-    if st.button("✅ LIMPAR FALHAS", use_container_width=True):
-        st.session_state.dtc_codes = []
-        st.success("Códigos de falha limpos!")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("📊 DADOS REAIS", use_container_width=True):
+            st.info("Coletando dados em tempo real...")
     
-    if st.button("⚡ REPROGRAMAR ECU", use_container_width=True):
-        st.warning("⚠️ ATENÇÃO! Não desligue o veículo durante a reprogramação!")
-        progress_bar = st.progress(0)
-        for i in range(100):
-            time.sleep(0.05)
-            progress_bar.progress(i + 1)
-        st.success("✅ Reprogramação concluída!")
+    with col2:
+        if st.button("⚡ REPROGRAMAR", use_container_width=True):
+            st.warning("⚠️ INICIANDO REPROGRAMAÇÃO")
+            progress = st.progress(0)
+            for i in range(100):
+                time.sleep(0.05)
+                progress.progress(i + 1)
+            st.success("✅ Reprogramação concluída!")
 
 # =============================================
 # CONTEÚDO PRINCIPAL
 # =============================================
-
 if st.session_state.connected:
-    # Simulação de dados em tempo real
-    st.session_state.live_data = {
+    # Atualiza dados simulados
+    st.session_state.current_data = {
         'rpm': random.randint(750, 3500),
         'speed': random.randint(0, 120),
-        'temp': random.randint(80, 105),
+        'temp': random.randint(82, 98),
         'battery': round(12 + random.random() * 2, 1),
-        'oil_pressure': round(3 + random.random() * 2, 1),
-        'engine_load': random.randint(15, 65),
-        'intake_temp': random.randint(25, 45),
-        'timing_advance': random.randint(5, 25),
+        'oil_pressure': round(3.5 + random.random() * 1.5, 1),
+        'engine_load': random.randint(15, 55),
+        'intake_temp': random.randint(25, 40),
+        'timing_advance': random.randint(8, 22),
         'o2_sensor': round(0.7 + random.random() * 0.2, 2),
-        'fuel_pressure': random.randint(320, 400),
-        'throttle': random.randint(5, 40),
-        'maf': round(5 + random.random() * 10, 1)
+        'fuel_pressure': random.randint(340, 400),
+        'throttle': random.randint(8, 35),
+        'maf': round(5 + random.random() * 8, 1)
     }
     
-    # Atualiza histórico
-    st.session_state.history['rpm'].append(st.session_state.live_data['rpm'])
-    st.session_state.history['temp'].append(st.session_state.live_data['temp'])
-    st.session_state.history['time'].append(datetime.now().strftime("%H:%M:%S"))
+    # LINHA 1: MÉTRICAS PRINCIPAIS
+    st.markdown("## 📊 PAINEL PRINCIPAL")
     
-    # Mantém apenas últimos 50 pontos
-    if len(st.session_state.history['rpm']) > 50:
-        st.session_state.history['rpm'].pop(0)
-        st.session_state.history['temp'].pop(0)
-        st.session_state.history['time'].pop(0)
-
-# =============================================
-# LINHA 1: MÉTRICAS PRINCIPAIS
-# =============================================
-st.markdown("## 📊 DADOS EM TEMPO REAL")
-
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">RPM</div>
-        <div class="metric-value">{st.session_state.live_data['rpm']}</div>
-        <div style="color: #888;">rotações/min</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col2:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">VELOCIDADE</div>
-        <div class="metric-value">{st.session_state.live_data['speed']} km/h</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col3:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">TEMP. MOTOR</div>
-        <div class="metric-value">{st.session_state.live_data['temp']}°C</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col4:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">BATERIA</div>
-        <div class="metric-value">{st.session_state.live_data['battery']}V</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-st.markdown("---")
-
-# =============================================
-# LINHA 2: GRÁFICOS
-# =============================================
-col1, col2 = st.columns(2)
-
-with col1:
-    st.subheader("📈 RPM em Tempo Real")
+    col1, col2, col3, col4 = st.columns(4)
     
-    if st.session_state.history['rpm']:
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=st.session_state.history['time'],
-            y=st.session_state.history['rpm'],
-            mode='lines',
-            name='RPM',
-            line=dict(color='#ff6600', width=2)
-        ))
-        fig.update_layout(
-            height=300,
-            margin=dict(l=0, r=0, t=20, b=20),
-            paper_bgcolor='#0a0c10',
-            plot_bgcolor='#1a1d24',
-            font=dict(color='white'),
-            xaxis=dict(showgrid=True, gridcolor='#333'),
-            yaxis=dict(showgrid=True, gridcolor='#333', range=[0, 7000])
-        )
-        st.plotly_chart(fig, use_container_width=True)
-
-with col2:
-    st.subheader("🌡️ Temperatura do Motor")
+    with col1:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-value">{st.session_state.current_data['rpm']}</div>
+            <div class="metric-label">RPM</div>
+            <div class="metric-unit">rotações/min</div>
+        </div>
+        """, unsafe_allow_html=True)
     
-    if st.session_state.history['temp']:
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=st.session_state.history['time'],
-            y=st.session_state.history['temp'],
-            mode='lines',
-            name='Temperatura',
-            line=dict(color='#ff3300', width=2),
-            fill='tozeroy'
-        ))
-        fig.update_layout(
-            height=300,
-            margin=dict(l=0, r=0, t=20, b=20),
-            paper_bgcolor='#0a0c10',
-            plot_bgcolor='#1a1d24',
-            font=dict(color='white'),
-            xaxis=dict(showgrid=True, gridcolor='#333'),
-            yaxis=dict(showgrid=True, gridcolor='#333', range=[70, 120])
-        )
-        st.plotly_chart(fig, use_container_width=True)
-
-st.markdown("---")
-
-# =============================================
-# LINHA 3: DADOS DO VEÍCULO
-# =============================================
-if st.session_state.connected:
+    with col2:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-value">{st.session_state.current_data['speed']}</div>
+            <div class="metric-label">VELOCIDADE</div>
+            <div class="metric-unit">km/h</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-value">{st.session_state.current_data['temp']}°</div>
+            <div class="metric-label">TEMP. MOTOR</div>
+            <div class="metric-unit">°C</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col4:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-value">{st.session_state.current_data['battery']}V</div>
+            <div class="metric-label">BATERIA</div>
+            <div class="metric-unit">volts</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # LINHA 2: INFORMAÇÕES DO VEÍCULO E DADOS DO MOTOR
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("🚗 INFORMAÇÕES DO VEÍCULO")
-        info_data = {
-            "Fabricante": st.session_state.vehicle_info.get('manufacturer', 'N/A'),
-            "Modelo": st.session_state.vehicle_info.get('model', 'N/A'),
-            "Ano": st.session_state.vehicle_info.get('year', 'N/A'),
-            "Motor": st.session_state.vehicle_info.get('engine', 'N/A'),
-            "ECU": st.session_state.vehicle_info.get('ecu', 'N/A'),
-            "VIN": st.session_state.vehicle_info.get('vin', 'N/A')
-        }
-        
-        for key, value in info_data.items():
-            st.markdown(f"**{key}:** {value}")
+        st.markdown("### 🚗 INFORMAÇÕES DO VEÍCULO")
+        info_df = pd.DataFrame({
+            'Parâmetro': ['Fabricante', 'Modelo', 'Ano', 'Motor', 'ECU', 'VIN', 'Software'],
+            'Valor': [
+                st.session_state.vehicle_info.get('manufacturer', 'N/A'),
+                st.session_state.vehicle_info.get('model', 'N/A'),
+                st.session_state.vehicle_info.get('year', 'N/A'),
+                st.session_state.vehicle_info.get('engine', 'N/A'),
+                st.session_state.vehicle_info.get('ecu', 'N/A'),
+                st.session_state.vehicle_info.get('vin', 'N/A'),
+                st.session_state.vehicle_info.get('software', 'N/A')
+            ]
+        })
+        st.dataframe(info_df, use_container_width=True, hide_index=True)
     
     with col2:
-        st.subheader("📊 DADOS DO MOTOR")
-        motor_data = {
-            "Pressão do Óleo": f"{st.session_state.live_data['oil_pressure']} bar",
-            "Carga do Motor": f"{st.session_state.live_data['engine_load']}%",
-            "Temp. Ar Admissão": f"{st.session_state.live_data['intake_temp']}°C",
-            "Avanço Ignição": f"{st.session_state.live_data['timing_advance']}°",
-            "Sonda Lambda": f"{st.session_state.live_data['o2_sensor']} V",
-            "Pressão Combustível": f"{st.session_state.live_data['fuel_pressure']} kPa",
-            "Posição Acelerador": f"{st.session_state.live_data['throttle']}%",
-            "Fluxo de Ar": f"{st.session_state.live_data['maf']} g/s"
-        }
-        
-        for key, value in motor_data.items():
-            st.markdown(f"**{key}:** {value}")
-
-st.markdown("---")
-
-# =============================================
-# CÓDIGOS DE FALHA
-# =============================================
-st.subheader("⚠️ CÓDIGOS DE FALHA (DTC)")
-
-if st.session_state.dtc_codes:
-    for dtc in st.session_state.dtc_codes:
-        severity_color = {
-            'Alta': '#ff3d00',
-            'Média': '#ffb300',
-            'Baixa': '#00c853'
-        }.get(dtc['severity'], '#888')
-        
-        st.markdown(f"""
-        <div class="dtc-card" style="border-left-color: {severity_color};">
-            <div class="dtc-code">{dtc['code']}</div>
-            <div style="color: white;">{dtc['desc']}</div>
-            <div style="color: #888; font-size: 12px;">Sistema: {dtc['system']} | Gravidade: {dtc['severity']}</div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("### 🔧 DADOS DO MOTOR")
+        motor_df = pd.DataFrame({
+            'Parâmetro': [
+                'Pressão do Óleo (bar)',
+                'Carga do Motor (%)',
+                'Temp. Ar Admissão (°C)',
+                'Avanço Ignição (°)',
+                'Sonda Lambda (V)',
+                'Pressão Combustível (kPa)',
+                'Posição Acelerador (%)',
+                'Fluxo de Ar (g/s)'
+            ],
+            'Valor': [
+                st.session_state.current_data['oil_pressure'],
+                st.session_state.current_data['engine_load'],
+                st.session_state.current_data['intake_temp'],
+                st.session_state.current_data['timing_advance'],
+                st.session_state.current_data['o2_sensor'],
+                st.session_state.current_data['fuel_pressure'],
+                st.session_state.current_data['throttle'],
+                st.session_state.current_data['maf']
+            ]
+        })
+        st.dataframe(motor_df, use_container_width=True, hide_index=True)
+    
+    st.markdown("---")
+    
+    # LINHA 3: CÓDIGOS DE FALHA
+    st.markdown("### ⚠️ CÓDIGOS DE FALHA (DTC)")
+    
+    if st.session_state.dtcs:
+        for dtc in st.session_state.dtcs:
+            severity_color = {
+                'Alta': '#ff3d00',
+                'Média': '#ffb300',
+                'Baixa': '#00c853'
+            }.get(dtc['severity'], '#888')
+            
+            st.markdown(f"""
+            <div class="dtc-card" style="border-left-color: {severity_color};">
+                <div class="dtc-code">{dtc['code']}</div>
+                <div class="dtc-desc">{dtc['desc']}</div>
+                <div style="color: #888; font-size: 12px; margin-top: 5px;">
+                    Sistema: {dtc['system']} | Gravidade: {dtc['severity']}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.info("Nenhum código de falha encontrado. O veículo está em condições normais de operação.")
+    
+    # LINHA 4: OSCILOSCÓPIO SIMULADO
+    st.markdown("---")
+    st.markdown("### 📈 OSCILOSCÓPIO - SINAIS EM TEMPO REAL")
+    
+    # Simula dados de osciloscópio
+    import numpy as np
+    import pandas as pd
+    
+    x = np.linspace(0, 100, 100)
+    y1 = np.sin(x * 0.2) * 0.5
+    y2 = np.sin(x * 0.1) * 5 + 7
+    
+    osc_df = pd.DataFrame({
+        'Tempo': x,
+        'CH1 - Sensor Detonação (V)': y1,
+        'CH2 - Sinal Injeção (V)': y2
+    })
+    
+    st.line_chart(osc_df.set_index('Tempo'))
+    
 else:
-    st.info("Nenhum código de falha encontrado.")
+    # Tela de boas-vindas quando desconectado
+    st.markdown("""
+    <div style="text-align: center; padding: 100px 20px;">
+        <div style="font-size: 80px; margin-bottom: 20px;">🔧</div>
+        <h2 style="color: #ff6600;">AUTOMOTIVE PRO</h2>
+        <p style="color: #888; font-size: 18px; margin: 20px 0;">
+            Conecte-se a um veículo para iniciar o diagnóstico
+        </p>
+        <p style="color: #666;">
+            • Leitura de dados em tempo real<br>
+            • Diagnóstico de falhas (DTC)<br>
+            • Osciloscópio integrado<br>
+            • Reprogramação de ECU
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # =============================================
-# RODAPÉ
+# FOOTER
 # =============================================
-st.markdown("---")
 st.markdown("""
 <div class="footer">
-    🔧 AUTOMOTIVE PRO v2.0 | Desenvolvido para diagnóstico profissional<br>
-    © 2026 - Todos os direitos reservados
+    <p>🔧 AUTOMOTIVE PRO v2.0 - Sistema Profissional de Diagnóstico Automotivo</p>
+    <p>Desenvolvido para mecânicos e preparadores | © 2026</p>
 </div>
 """, unsafe_allow_html=True)
 
-# Atualização automática a cada 2 segundos
+# Auto-refresh se conectado
 if st.session_state.connected:
-    time.sleep(2)
+    time.sleep(1)
     st.rerun()
