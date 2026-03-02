@@ -1,503 +1,256 @@
-// script.js - Lógica do frontend
+// script.js - Funcionalidades interativas
 
-// =============================================
-// VARIÁVEIS GLOBAIS
-// =============================================
-let socket = null;
-let connected = false;
-let rpmChart, tempChart, oscilloscope;
-let rpmData = [];
-let tempData = [];
-let timeData = [];
-let oscData = [[], [], []];
-let oscRunning = false;
+let ctx1, ctx2;
+let animationId1, animationId2;
+let time = 0;
 
 // =============================================
 // INICIALIZAÇÃO
 // =============================================
-document.addEventListener('DOMContentLoaded', function() {
-    initializeCharts();
-    initializeWebSocket();
-    loadDevices();
-    startUptimeCounter();
-});
-
-// =============================================
-// WEBSOCKET PARA DADOS EM TEMPO REAL
-// =============================================
-function initializeWebSocket() {
-    // Conecta ao backend Streamlit/WebSocket
-    socket = new WebSocket('ws://localhost:8501/ws');
+window.onload = function() {
+    // Inicializa canvas
+    ctx1 = document.getElementById('oscilloscope1').getContext('2d');
+    ctx2 = document.getElementById('oscilloscope2').getContext('2d');
     
-    socket.onopen = function() {
-        addLog('✅ Conectado ao servidor');
-    };
+    // Configura listeners
+    setupEventListeners();
     
-    socket.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-        updateDashboard(data);
-    };
-    
-    socket.onclose = function() {
-        addLog('❌ Desconectado do servidor');
-        setTimeout(initializeWebSocket, 3000);
-    };
-}
-
-// =============================================
-// GRÁFICOS
-// =============================================
-function initializeCharts() {
-    // Gráfico de RPM
-    const rpmCtx = document.getElementById('rpmChart').getContext('2d');
-    rpmChart = new Chart(rpmCtx, {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'RPM',
-                data: [],
-                borderColor: '#ff6600',
-                backgroundColor: 'rgba(255,102,0,0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: { color: '#2e343f' },
-                    ticks: { color: '#9aa4b8' }
-                },
-                x: {
-                    grid: { display: false },
-                    ticks: { color: '#9aa4b8' }
-                }
-            },
-            plugins: {
-                legend: { display: false }
-            }
-        }
-    });
-
-    // Gráfico de Temperatura
-    const tempCtx = document.getElementById('tempChart').getContext('2d');
-    tempChart = new Chart(tempCtx, {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'Temperatura °C',
-                data: [],
-                borderColor: '#ff3333',
-                backgroundColor: 'rgba(255,51,51,0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: { color: '#2e343f' },
-                    ticks: { color: '#9aa4b8' }
-                },
-                x: {
-                    grid: { display: false },
-                    ticks: { color: '#9aa4b8' }
-                }
-            },
-            plugins: {
-                legend: { display: false }
-            }
-        }
-    });
-
-    // Osciloscópio
-    const oscCtx = document.getElementById('oscilloscope').getContext('2d');
-    oscilloscope = new Chart(oscCtx, {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [
-                {
-                    label: 'CH1',
-                    data: [],
-                    borderColor: '#ffff00',
-                    borderWidth: 1,
-                    pointRadius: 0,
-                    tension: 0.1
-                },
-                {
-                    label: 'CH2',
-                    data: [],
-                    borderColor: '#00ffff',
-                    borderWidth: 1,
-                    pointRadius: 0,
-                    tension: 0.1
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: false,
-            scales: {
-                y: {
-                    beginAtZero: false,
-                    grid: { color: '#2e343f' }
-                },
-                x: {
-                    display: false
-                }
-            },
-            plugins: {
-                legend: { display: false }
-            }
-        }
-    });
-}
-
-// =============================================
-// ATUALIZAÇÃO DO DASHBOARD
-// =============================================
-function updateDashboard(data) {
-    // Atualiza medidores
-    document.getElementById('rpmValue').textContent = data.rpm || 0;
-    document.getElementById('speedValue').textContent = data.speed || 0;
-    document.getElementById('tempValue').textContent = data.temp || 0;
-    document.getElementById('batteryValue').textContent = (data.battery || 0).toFixed(1);
-    
-    // Atualiza barras
-    document.getElementById('rpmBar').style.width = ((data.rpm || 0) / 8000 * 100) + '%';
-    document.getElementById('speedBar').style.width = ((data.speed || 0) / 200 * 100) + '%';
-    document.getElementById('tempBar').style.width = ((data.temp || 0) / 120 * 100) + '%';
-    document.getElementById('batteryBar').style.width = ((data.battery || 0) / 15 * 100) + '%';
-    
-    // Atualiza dados do veículo
-    if (data.vehicle) {
-        document.getElementById('manufacturer').textContent = data.vehicle.manufacturer || '---';
-        document.getElementById('model').textContent = data.vehicle.model || '---';
-        document.getElementById('year').textContent = data.vehicle.year || '---';
-        document.getElementById('engine').textContent = data.vehicle.engine || '---';
-        document.getElementById('ecu').textContent = data.vehicle.ecu || '---';
-    }
-    
-    // Atualiza gráficos
-    if (data.rpm) {
-        rpmData.push(data.rpm);
-        if (rpmData.length > 60) rpmData.shift();
-        
-        timeData.push(new Date().toLocaleTimeString());
-        if (timeData.length > 60) timeData.shift();
-        
-        rpmChart.data.labels = timeData;
-        rpmChart.data.datasets[0].data = rpmData;
-        rpmChart.update();
-    }
-    
-    if (data.temp) {
-        tempData.push(data.temp);
-        if (tempData.length > 60) tempData.shift();
-        
-        tempChart.data.labels = timeData;
-        tempChart.data.datasets[0].data = tempData;
-        tempChart.update();
-    }
-    
-    // Atualiza tabela de dados
-    updateEngineData(data);
-    
-    // Atualiza dados em tempo real
-    updateLiveData(data);
-}
-
-// =============================================
-// TABELA DE DADOS DO MOTOR
-// =============================================
-function updateEngineData(data) {
-    const params = [
-        { name: 'Pressão do Óleo', value: data.oilPressure || 0, unit: 'bar', status: 'Normal' },
-        { name: 'Carga do Motor', value: data.engineLoad || 0, unit: '%', status: 'Normal' },
-        { name: 'Temperatura do Ar', value: data.intakeTemp || 0, unit: '°C', status: 'Normal' },
-        { name: 'Avanço Ignição', value: data.timingAdvance || 0, unit: '°', status: 'Normal' },
-        { name: 'Sonda Lambda', value: data.o2Sensor || 0, unit: 'V', status: 'Normal' },
-        { name: 'Pressão Combustível', value: data.fuelPressure || 0, unit: 'kPa', status: 'Normal' },
-        { name: 'Posição Acelerador', value: data.throttle || 0, unit: '%', status: 'Normal' },
-        { name: 'Fluxo de Ar', value: data.maf || 0, unit: 'g/s', status: 'Normal' }
-    ];
-    
-    let html = '';
-    params.forEach(p => {
-        html += `
-            <tr>
-                <td>${p.name}</td>
-                <td>${p.value}</td>
-                <td>${p.unit}</td>
-                <td><span class="badge success">${p.status}</span></td>
-            </tr>
-        `;
-    });
-    
-    document.getElementById('engineDataBody').innerHTML = html;
-}
-
-// =============================================
-// DADOS EM TEMPO REAL
-// =============================================
-function updateLiveData(data) {
-    const params = [
-        { param: 'RPM', value: data.rpm || 0 },
-        { param: 'Velocidade', value: (data.speed || 0) + ' km/h' },
-        { param: 'Temp. Motor', value: (data.temp || 0) + ' °C' },
-        { param: 'Bateria', value: (data.battery || 0).toFixed(1) + ' V' },
-        { param: 'Pressão Óleo', value: (data.oilPressure || 0) + ' bar' },
-        { param: 'Carga Motor', value: (data.engineLoad || 0) + ' %' },
-        { param: 'Sonda Lambda', value: (data.o2Sensor || 0) + ' V' },
-        { param: 'Avanço', value: (data.timingAdvance || 0) + ' °' }
-    ];
-    
-    let html = '';
-    params.forEach(p => {
-        html += `
-            <div class="live-item">
-                <span class="param">${p.param}:</span>
-                <span class="value">${p.value}</span>
-            </div>
-        `;
-    });
-    
-    document.getElementById('liveData').innerHTML = html;
-}
-
-// =============================================
-// CÓDIGOS DE FALHA (DTC)
-// =============================================
-function updateDTCs(dtcs) {
-    let html = '';
-    dtcs.forEach(dtc => {
-        html += `
-            <tr>
-                <td><span class="dtc-code">${dtc.code}</span></td>
-                <td>${dtc.description}</td>
-                <td>${dtc.system}</td>
-                <td><span class="badge ${dtc.severity}">${dtc.severity}</span></td>
-            </tr>
-        `;
-    });
-    
-    document.getElementById('dtcBody').innerHTML = html;
-}
-
-// =============================================
-// OSCILOSCÓPIO
-// =============================================
-function startOsc() {
-    oscRunning = true;
+    // Simula dados iniciais
     simulateOscilloscope();
-}
-
-function stopOsc() {
-    oscRunning = false;
-}
-
-function simulateOscilloscope() {
-    if (!oscRunning) return;
-    
-    const points = 100;
-    const time = Array.from({length: points}, (_, i) => i);
-    
-    // Simula ondas senoidais
-    const ch1 = Array.from({length: points}, (_, i) => 
-        Math.sin(i * 0.2 + Date.now() * 0.01) * 0.5
-    );
-    
-    const ch2 = Array.from({length: points}, (_, i) => 
-        Math.sin(i * 0.1 + Date.now() * 0.02) * 5 + 7
-    );
-    
-    oscilloscope.data.labels = time;
-    oscilloscope.data.datasets[0].data = ch1;
-    oscilloscope.data.datasets[1].data = ch2;
-    oscilloscope.update();
-    
-    setTimeout(simulateOscilloscope, 50);
-}
+};
 
 // =============================================
-// AÇÕES DO USUÁRIO
+// EVENT LISTENERS
 // =============================================
-function scanVehicle() {
-    addLog('🔍 Escaneando veículo...');
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({action: 'scan'}));
-    }
-}
-
-function readDTC() {
-    addLog('⚠️ Lendo códigos de falha...');
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({action: 'read_dtc'}));
-    }
-}
-
-function clearDTC() {
-    if (confirm('Tem certeza que deseja limpar os códigos de falha?')) {
-        addLog('✅ Limpando códigos de falha...');
-        if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({action: 'clear_dtc'}));
-        }
-    }
-}
-
-function liveData() {
-    addLog('📊 Coletando dados em tempo real...');
-    document.querySelector('.main-area').scrollTop = 0;
-}
-
-function reprogramECU() {
-    if (confirm('⚠️ ATENÇÃO! A reprogramação da ECU pode danificar o veículo se feita incorretamente. Deseja continuar?')) {
-        addLog('⚡ Iniciando reprogramação da ECU...');
-        if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({action: 'reprogram'}));
-        }
-    }
+function setupEventListeners() {
+    // Botão conectar
+    document.getElementById('connectBtn').addEventListener('click', toggleConnection);
+    
+    // Botões de ação
+    document.getElementById('scanBtn').addEventListener('click', scanVehicle);
+    document.getElementById('readDTCBtn').addEventListener('click', readDTC);
+    document.getElementById('clearDTCBtn').addEventListener('click', clearDTC);
+    document.getElementById('liveDataBtn').addEventListener('click', liveData);
+    document.getElementById('reprogramBtn').addEventListener('click', reprogramECU);
+    
+    // Botões iniciar/parar
+    document.getElementById('startBtn').addEventListener('click', startAcquisition);
+    document.getElementById('stopBtn').addEventListener('click', stopAcquisition);
+    
+    // Controles do osciloscópio
+    document.getElementById('startOsc').addEventListener('click', startOscilloscope);
+    document.getElementById('stopOsc').addEventListener('click', stopOscilloscope);
 }
 
 // =============================================
 // CONEXÃO
 // =============================================
-document.getElementById('connectBtn').addEventListener('click', function() {
-    const device = document.getElementById('deviceSelect').value;
-    if (!device) {
-        alert('Selecione um dispositivo');
-        return;
-    }
+function toggleConnection() {
+    const btn = document.getElementById('connectBtn');
+    const led = btn.querySelector('.led-small');
     
-    const btn = this;
-    if (!connected) {
-        btn.innerHTML = '<span>🔌</span> DESCONECTAR';
-        btn.style.background = '#ff3d00';
-        document.querySelector('.led').classList.add('connected');
-        document.getElementById('statusText').textContent = 'Conectado';
-        connected = true;
-        addLog(`✅ Conectado ao dispositivo ${device}`);
-        
-        if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({action: 'connect', device: device}));
-        }
+    if (btn.classList.contains('connected')) {
+        btn.classList.remove('connected');
+        btn.innerHTML = '<span class="led-small"></span> CONECTAR';
+        led.style.backgroundColor = '#888';
+        updateLog('Desconectado do veículo');
     } else {
-        btn.innerHTML = '<span>🔌</span> CONECTAR';
-        btn.style.background = '#ff6600';
-        document.querySelector('.led').classList.remove('connected');
-        document.getElementById('statusText').textContent = 'Desconectado';
-        connected = false;
-        addLog('❌ Desconectado');
+        btn.classList.add('connected');
+        btn.innerHTML = '<span class="led-small" style="background:#00ff00"></span> DESCONECTAR';
+        led.style.backgroundColor = '#00ff00';
+        updateLog('Conectado ao veículo - Protocolo CAN 500kbps');
     }
-});
+}
 
 // =============================================
-// SELEÇÃO DE DISPOSITIVOS
+// AÇÕES
 // =============================================
-document.querySelectorAll('.conn-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        document.querySelectorAll('.conn-btn').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        loadDevices(this.dataset.conn);
-    });
-});
-
-function loadDevices(type = 'bluetooth') {
-    const select = document.getElementById('deviceSelect');
-    select.innerHTML = '<option value="">Buscando dispositivos...</option>';
-    
-    // Simula busca de dispositivos
+function scanVehicle() {
+    updateLog('🔍 Escaneando veículo...');
     setTimeout(() => {
-        let devices = [];
-        if (type === 'bluetooth') {
-            devices = [
-                'OBDII-BT-001 (ELM327)',
-                'OBDII-BT-002 (STN2120)',
-                'Scanner Pro BT-01'
-            ];
-        } else if (type === 'wifi') {
-            devices = [
-                'OBDII-WiFi-192.168.0.10',
-                'OBDII-WiFi-192.168.0.11'
-            ];
-        } else if (type === 'usb') {
-            devices = [
-                'COM3 - USB Serial',
-                'COM4 - USB Serial',
-                '/dev/ttyUSB0'
-            ];
-        }
-        
-        let options = '<option value="">Selecione o dispositivo...</option>';
-        devices.forEach(d => {
-            options += `<option value="${d}">${d}</option>`;
-        });
-        
-        select.innerHTML = options;
-        addLog(`📡 ${devices.length} dispositivos encontrados`);
+        document.getElementById('manufacturer').textContent = 'VOLKSWAGEN';
+        document.getElementById('model').textContent = 'GOL 1.6 MSI';
+        document.getElementById('year').textContent = '2024';
+        document.getElementById('engine').textContent = 'EA211 (16V)';
+        document.getElementById('vin').textContent = '9BWZZZ377VT004251';
+        updateLog('✅ Veículo identificado: VW GOL 1.6 2024');
     }, 2000);
 }
 
-// =============================================
-// LOGS E UTILITÁRIOS
-// =============================================
-function addLog(message) {
-    const logArea = document.getElementById('logArea');
-    const time = new Date().toLocaleTimeString();
-    logArea.innerHTML = `<span class="log-entry">[${time}] ${message}</span>` + logArea.innerHTML;
-    
-    // Limita número de logs
-    if (logArea.children.length > 10) {
-        logArea.removeChild(logArea.lastChild);
+function readDTC() {
+    updateLog('⚠️ Lendo códigos de falha...');
+    setTimeout(() => {
+        addHistory('3 códigos de falha encontrados');
+        updateLog('✅ P0301, P0420, P0171 detectados');
+    }, 1500);
+}
+
+function clearDTC() {
+    if (confirm('Limpar códigos de falha?')) {
+        updateLog('✅ Códigos de falha limpos');
+        addHistory('Falhas limpas');
     }
 }
 
-function startUptimeCounter() {
-    let seconds = 0;
-    setInterval(() => {
-        seconds++;
-        const hours = Math.floor(seconds / 3600);
-        const mins = Math.floor((seconds % 3600) / 60);
-        const secs = seconds % 60;
-        document.getElementById('uptime').textContent = 
-            `${hours.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
-    }, 1000);
+function liveData() {
+    updateLog('📊 Coletando dados em tempo real');
+}
+
+function reprogramECU() {
+    if (confirm('⚠️ ATENÇÃO! A reprogramação pode danificar a ECU. Continuar?')) {
+        updateLog('⚡ Iniciando reprogramação...');
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += 10;
+            updateLog(`⚡ Reprogramando: ${progress}%`);
+            if (progress >= 100) {
+                clearInterval(interval);
+                updateLog('✅ Reprogramação concluída!');
+            }
+        }, 500);
+    }
 }
 
 // =============================================
-// SIMULAÇÃO DE DADOS (para testes sem hardware)
+// OSCILOSCÓPIO
+// =============================================
+function startOscilloscope() {
+    stopOscilloscope();
+    animateOscilloscope();
+    updateLog('▶️ Osciloscópio iniciado');
+}
+
+function stopOscilloscope() {
+    if (animationId1) {
+        cancelAnimationFrame(animationId1);
+        cancelAnimationFrame(animationId2);
+    }
+    updateLog('⏹️ Osciloscópio parado');
+}
+
+function animateOscilloscope() {
+    drawChannel1();
+    drawChannel2();
+}
+
+function drawChannel1() {
+    const width = ctx1.canvas.width;
+    const height = ctx1.canvas.height;
+    
+    ctx1.clearRect(0, 0, width, height);
+    ctx1.strokeStyle = '#ffff00';
+    ctx1.lineWidth = 2;
+    ctx1.beginPath();
+    
+    for (let x = 0; x < width; x++) {
+        // Onda senoidal para sensor de detonação
+        const y = height/2 + Math.sin(x * 0.02 + time) * 30 + 
+                  Math.sin(x * 0.1 + time * 2) * 10;
+        
+        if (x === 0) {
+            ctx1.moveTo(x, y);
+        } else {
+            ctx1.lineTo(x, y);
+        }
+    }
+    
+    ctx1.stroke();
+    
+    // Atualiza valor
+    const value = (0.4 + Math.sin(time) * 0.1).toFixed(2);
+    document.getElementById('ch1Value').textContent = value + ' V';
+    
+    time += 0.1;
+    animationId1 = requestAnimationFrame(drawChannel1);
+}
+
+function drawChannel2() {
+    const width = ctx2.canvas.width;
+    const height = ctx2.canvas.height;
+    
+    ctx2.clearRect(0, 0, width, height);
+    ctx2.strokeStyle = '#00ffff';
+    ctx2.lineWidth = 2;
+    ctx2.beginPath();
+    
+    for (let x = 0; x < width; x++) {
+        // Sinal quadrado para bomba injetora
+        const y = height/2 + (Math.sin(x * 0.05 + time * 2) > 0 ? 40 : -40);
+        
+        if (x === 0) {
+            ctx2.moveTo(x, y);
+        } else {
+            ctx2.lineTo(x, y);
+        }
+    }
+    
+    ctx2.stroke();
+    
+    // Atualiza valor
+    const value = (12 + Math.sin(time) * 0.5).toFixed(1);
+    document.getElementById('ch2Value').textContent = value + ' V';
+    
+    animationId2 = requestAnimationFrame(drawChannel2);
+}
+
+// =============================================
+// INICIAR/PARAR AQUISIÇÃO
+// =============================================
+function startAcquisition() {
+    updateLog('▶️ Iniciando aquisição de dados');
+    // Simula atualização de dados
+    updateDataInterval = setInterval(updateRealTimeData, 1000);
+}
+
+function stopAcquisition() {
+    updateLog('⏹️ Aquisição parada');
+    if (updateDataInterval) {
+        clearInterval(updateDataInterval);
+    }
+}
+
+function updateRealTimeData() {
+    // Simula dados em tempo real
+    document.getElementById('rpm').textContent = Math.floor(Math.random() * 1000 + 750);
+    document.getElementById('temp').textContent = Math.floor(Math.random() * 20 + 80);
+    document.getElementById('voltage').textContent = (12 + Math.random() * 2).toFixed(1);
+    document.getElementById('oilPressure').textContent = (3 + Math.random() * 2).toFixed(1);
+    document.getElementById('engineLoad').textContent = Math.floor(Math.random() * 30 + 15);
+    
+    addHistory(`RPM: ${document.getElementById('rpm').textContent}`);
+}
+
+// =============================================
+// UTILITÁRIOS
+// =============================================
+function updateLog(message) {
+    const logArea = document.getElementById('logArea');
+    const time = new Date().toLocaleTimeString();
+    logArea.innerHTML = `> [${time}] ${message}`;
+}
+
+function addHistory(message) {
+    const historyList = document.getElementById('historyList');
+    const time = new Date().toLocaleTimeString();
+    const newItem = document.createElement('div');
+    newItem.className = 'history-item';
+    newItem.textContent = `${time} - ${message}`;
+    
+    historyList.insertBefore(newItem, historyList.firstChild);
+    
+    // Limita número de itens
+    if (historyList.children.length > 10) {
+        historyList.removeChild(historyList.lastChild);
+    }
+}
+
+// =============================================
+// ATUALIZAÇÃO PERIÓDICA
 // =============================================
 setInterval(() => {
-    if (!connected) return;
-    
-    const mockData = {
-        rpm: Math.floor(Math.random() * 3000) + 750,
-        speed: Math.floor(Math.random() * 80),
-        temp: Math.floor(Math.random() * 20) + 80,
-        battery: 12 + Math.random() * 2,
-        oilPressure: 3 + Math.random() * 2,
-        engineLoad: Math.floor(Math.random() * 40) + 20,
-        intakeTemp: Math.floor(Math.random() * 15) + 25,
-        timingAdvance: Math.floor(Math.random() * 20) + 5,
-        o2Sensor: 0.7 + Math.random() * 0.2,
-        fuelPressure: 350 + Math.random() * 50,
-        throttle: Math.floor(Math.random() * 30) + 10,
-        maf: 5 + Math.random() * 10
-    };
-    
-    updateDashboard(mockData);
-}, 500);
+    // Atualiza dados a cada 2 segundos se conectado
+    const connectBtn = document.getElementById('connectBtn');
+    if (connectBtn.classList.contains('connected')) {
+        updateRealTimeData();
+    }
+}, 2000);
