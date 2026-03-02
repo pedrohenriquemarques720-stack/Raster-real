@@ -10,6 +10,9 @@ from datetime import datetime
 import threading
 import logging
 
+# Importando PIDs brasileiros
+from pids_brasil import PIDsBrasil, PIDBrasil
+
 # Configuração de logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -362,6 +365,7 @@ class ECUControl:
         self.manufacturer = manufacturer
         self.use_simulator = use_simulator
         self.param_db = ParameterDatabase()
+        self.pids_brasil = PIDsBrasil()  # Banco de dados brasileiro
         self.simulator = CANSIMULATOR() if use_simulator else None
         self.can_bus = None  # Placeholder para CAN real
         self.session_active = False
@@ -681,6 +685,75 @@ class ECUControl:
             force: Ignora verificações de segurança
         """
         return self.write_parameter(0x3301, 1, force)
+    
+    # =========================================
+    # FUNÇÕES ESPECÍFICAS BRASIL
+    # =========================================
+    
+    def write_parameter_brasil(self, pid_id: int, value: float, 
+                                 force: bool = False) -> ECUResponse:
+        """
+        Escreve parâmetro específico brasileiro
+        
+        Args:
+            pid_id: ID do parâmetro brasileiro
+            value: Valor a ser escrito
+            force: Ignora verificações de segurança
+        """
+        # Busca o PID no banco de dados brasileiro
+        pid_info = None
+        for pid in self.pids_brasil.todos_pids.values():
+            if pid.id == pid_id:
+                pid_info = pid
+                break
+        
+        if not pid_info:
+            return ECUResponse(
+                success=False,
+                message=f"PID 0x{pid_id:04X} não encontrado na base brasileira"
+            )
+        
+        # Adapta para o formato UDS
+        param = self._convert_brasil_to_param(pid_info)
+        
+        # Usa o método de escrita existente
+        return self.write_parameter(param.id, value, force)
+    
+    def _convert_brasil_to_param(self, pid_brasil: PIDBrasil) -> PIDParameter:
+        """Converte PID brasileiro para formato PIDParameter"""
+        return PIDParameter(
+            id=pid_brasil.id,
+            name=pid_brasil.nome,
+            unit=pid_brasil.unidade,
+            min_val=pid_brasil.min_val,
+            max_val=pid_brasil.max_val,
+            default_val=pid_brasil.min_val,
+            step=1.0,
+            can_id_request=0x7E0,
+            can_id_response=0x7E8,
+            can_29bit_request=0x18DAF100,
+            can_29bit_response=0x18DAF108,
+            kwp_id=pid_brasil.id,
+            data_format=pid_brasil.formato,
+            scaling_factor=pid_brasil.escala,
+            description=pid_brasil.descricao,
+            manufacturer_specific=True
+        )
+    
+    def reset_vw_flex(self, force: bool = False) -> ECUResponse:
+        """Reset de adaptação Flex para VW EA111/EA211"""
+        self._log("Executando reset Flex Fuel VW...", "INFO")
+        return self.write_parameter_brasil(0xF101, 1, force)
+    
+    def adjust_fiat_idle(self, rpm: int, force: bool = False) -> ECUResponse:
+        """Ajuste de marcha lenta para Fiat Fire/Firefly"""
+        self._log(f"Ajustando marcha lenta Fiat para {rpm} RPM...", "INFO")
+        return self.write_parameter_brasil(0xF201, rpm, force)
+    
+    def reset_gm_knock(self, force: bool = False) -> ECUResponse:
+        """Reset de aprendizado de detonação para GM CSS Prime"""
+        self._log("Resetando aprendizado de detonação GM...", "INFO")
+        return self.write_parameter_brasil(0xF301, 1, force)
     
     def auto_tune_to_lambda1(self, max_attempts: int = 10) -> Dict[str, Any]:
         """
