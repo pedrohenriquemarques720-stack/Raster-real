@@ -2,11 +2,12 @@
 
 import numpy as np
 from typing import Dict, List, Tuple, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 import json
 import hashlib
 from datetime import datetime
+import time
 
 # =============================================
 # 1. BASE DE CONHECIMENTO RAG (Retrieval-Augmented Generation)
@@ -38,6 +39,17 @@ class WiringDiagram:
     connector_location: str
     diagram_url: str
 
+@dataclass
+class ComponentFailureProbability:
+    """Probabilidade de falha de componente"""
+    component: str
+    probability: float
+    confidence: float
+    symptoms_matched: List[str]
+    recommended_test: str
+    expected_values: Dict[str, Tuple[float, float]]
+    part_number: Optional[str] = None
+
 class KnowledgeBaseRAG:
     """
     Base de conhecimento com RAG (Retrieval-Augmented Generation)
@@ -55,7 +67,7 @@ class KnowledgeBaseRAG:
             'VW_P0300_2023': TechnicalBulletin(
                 bulletin_id='VW-23-05',
                 manufacturer='VOLKSWAGEN',
-                models=['Gol', 'Polo', 'Virtus'],
+                models=['Gol', 'Polo', 'Virtus', 'T-Cross'],
                 years=[2020, 2021, 2022, 2023],
                 dtc_codes=['P0300', 'P0301', 'P0302', 'P0303', 'P0304'],
                 symptoms=['Falha intermitente', 'Marcha lenta irregular', 'Perda de potência'],
@@ -68,7 +80,7 @@ class KnowledgeBaseRAG:
             'FIA_P0420_2024': TechnicalBulletin(
                 bulletin_id='FIA-24-02',
                 manufacturer='FIAT',
-                models=['Argo', 'Cronos', 'Toro'],
+                models=['Argo', 'Cronos', 'Toro', 'Pulse'],
                 years=[2021, 2022, 2023, 2024],
                 dtc_codes=['P0420'],
                 symptoms=['Luz da injeção acesa', 'Aumento de consumo'],
@@ -81,7 +93,7 @@ class KnowledgeBaseRAG:
             'CHEV_P0171_2023': TechnicalBulletin(
                 bulletin_id='CHEV-23-11',
                 manufacturer='CHEVROLET',
-                models=['Onix', 'Onix Plus', 'Tracker'],
+                models=['Onix', 'Onix Plus', 'Tracker', 'Cruze'],
                 years=[2020, 2021, 2022, 2023],
                 dtc_codes=['P0171', 'P0174'],
                 symptoms=['Mistura pobre', 'Marcha lenta instável'],
@@ -94,7 +106,7 @@ class KnowledgeBaseRAG:
             'FOR_P0300_2023': TechnicalBulletin(
                 bulletin_id='FOR-23-08',
                 manufacturer='FORD',
-                models=['Ka', 'Fiesta', 'EcoSport'],
+                models=['Ka', 'Fiesta', 'EcoSport', 'Ranger'],
                 years=[2020, 2021, 2022, 2023],
                 dtc_codes=['P0300', 'P0301'],
                 symptoms=['Motor engasgando', 'Falha na aceleração'],
@@ -103,6 +115,32 @@ class KnowledgeBaseRAG:
                 parts_needed=['CM5G-12A366-BA'],
                 labor_time=1.2,
                 confidence_score=0.91
+            ),
+            'TOY_P0300_2024': TechnicalBulletin(
+                bulletin_id='TOY-24-01',
+                manufacturer='TOYOTA',
+                models=['Corolla', 'Hilux', 'Yaris'],
+                years=[2021, 2022, 2023, 2024],
+                dtc_codes=['P0300', 'P0301'],
+                symptoms=['Falha de ignição', 'Motor irregular'],
+                root_cause='Velas de ignição com desgaste prematuro',
+                solution='Substituir velas (90919-01256)',
+                parts_needed=['90919-01256'],
+                labor_time=0.8,
+                confidence_score=0.89
+            ),
+            'HON_P0420_2024': TechnicalBulletin(
+                bulletin_id='HON-24-03',
+                manufacturer='HONDA',
+                models=['Civic', 'HR-V', 'Fit'],
+                years=[2020, 2021, 2022, 2023],
+                dtc_codes=['P0420'],
+                symptoms=['Catalisador ineficiente'],
+                root_cause='Sensor O2 pós-catalisador com falha',
+                solution='Substituir sensor O2 (36531-5R0-003)',
+                parts_needed=['36531-5R0-003'],
+                labor_time=0.6,
+                confidence_score=0.87
             )
         }
     
@@ -135,6 +173,33 @@ class KnowledgeBaseRAG:
                 expected_resistance={'bobina': (12.0, 17.0)},
                 connector_location='No trilho de combustível',
                 diagram_url='/diagrams/fia_injector.png'
+            ),
+            'FIA_O2': WiringDiagram(
+                component='Sonda Lambda Firefly',
+                pinout={1: 'Sinal', 2: 'GND', 3: 'Aquecimento +', 4: 'Aquecimento -'},
+                wire_colors={1: 'Branco', 2: 'Cinza', 3: 'Vermelho', 4: 'Preto'},
+                expected_voltage={'sinal': (0.1, 0.9), 'aquecimento': (11.5, 14.5)},
+                expected_resistance={'aquecimento': (3.5, 4.5)},
+                connector_location='No escapamento, próximo ao catalisador',
+                diagram_url='/diagrams/fia_o2.png'
+            ),
+            'CHEV_MAF': WiringDiagram(
+                component='Sensor MAF',
+                pinout={1: 'Alimentação', 2: 'Sinal', 3: 'GND'},
+                wire_colors={1: 'Vermelho', 2: 'Amarelo', 3: 'Preto'},
+                expected_voltage={'sinal': (0.5, 1.5)},
+                expected_resistance={'alimentacao': (10000, 20000)},
+                connector_location='No duto de ar, após o filtro',
+                diagram_url='/diagrams/chev_maf.png'
+            ),
+            'TOY_COIL': WiringDiagram(
+                component='Bobina de Ignição',
+                pinout={1: 'Alimentação', 2: 'GND', 3: 'Sinal'},
+                wire_colors={1: 'Vermelho', 2: 'Marrom', 3: 'Azul'},
+                expected_voltage={'ignicao_on': (11.5, 14.5)},
+                expected_resistance={'primario': (0.8, 1.2)},
+                connector_location='Na tampa das velas',
+                diagram_url='/diagrams/toy_coil.png'
             )
         }
     
@@ -170,6 +235,26 @@ class KnowledgeBaseRAG:
                 'diagnosis': 'Sensor MAF contaminado',
                 'solution': 'Limpeza do sensor MAF com cleaner específico',
                 'verified': True
+            },
+            {
+                'case_id': 'CASE-2024-004',
+                'vehicle': 'Toyota Corolla 2023',
+                'dtc': 'P0301',
+                'symptoms': ['Falha cilindro 1', 'Motor irregular'],
+                'live_data': {'rpm': 820, 'stft': 3.2, 'ltft': 4.1},
+                'diagnosis': 'Vela de ignição desgastada',
+                'solution': 'Troca das velas (90919-01256)',
+                'verified': True
+            },
+            {
+                'case_id': 'CASE-2024-005',
+                'vehicle': 'Honda HR-V 2022',
+                'dtc': 'P0420',
+                'symptoms': ['Catalisador ineficiente'],
+                'live_data': {'o2_pre': 0.72, 'o2_pos': 0.68, 'stft': 2.1},
+                'diagnosis': 'Sensor O2 pós-catalisador com falha',
+                'solution': 'Troca do sensor O2 (36531-5R0-003)',
+                'verified': True
             }
         ]
     
@@ -200,11 +285,20 @@ class KnowledgeBaseRAG:
         
         # Busca esquemas elétricos relacionados
         if 'P030' in dtc:
-            results['wiring'].append(self._format_wiring('VW_COIL'))
+            if manufacturer == 'VOLKSWAGEN':
+                results['wiring'].append(self._format_wiring('VW_COIL'))
+            elif manufacturer == 'TOYOTA':
+                results['wiring'].append(self._format_wiring('TOY_COIL'))
         elif 'P042' in dtc:
-            results['wiring'].append(self._format_wiring('VW_O2'))
+            if manufacturer == 'FIAT':
+                results['wiring'].append(self._format_wiring('FIA_O2'))
+            elif manufacturer == 'VOLKSWAGEN':
+                results['wiring'].append(self._format_wiring('VW_O2'))
         elif 'P017' in dtc:
-            results['wiring'].append(self._format_wiring('FIA_INJECTOR'))
+            if manufacturer == 'CHEVROLET':
+                results['wiring'].append(self._format_wiring('CHEV_MAF'))
+            elif manufacturer == 'FIAT':
+                results['wiring'].append(self._format_wiring('FIA_INJECTOR'))
         
         # Busca casos similares
         for case in self.resolved_cases:
@@ -237,17 +331,6 @@ class KnowledgeBaseRAG:
 # 2. MOTOR DE DIAGNÓSTICO PROBABILÍSTICO
 # =============================================
 
-@dataclass
-class ComponentFailureProbability:
-    """Probabilidade de falha de componente"""
-    component: str
-    probability: float
-    confidence: float
-    symptoms_matched: List[str]
-    recommended_test: str
-    expected_values: Dict[str, Tuple[float, float]]
-    part_number: Optional[str] = None
-
 class LiveDataAnalyzer:
     """
     Analisa dados em tempo real e calcula probabilidades
@@ -262,7 +345,9 @@ class LiveDataAnalyzer:
             'maf': (2.5, 6.0),
             'map': (25, 45),
             'rpm_deviation': (-100, 100),
-            'coolant_temp': (80, 100)
+            'coolant_temp': (80, 100),
+            'engine_load': (15, 45),
+            'timing_advance': (8, 22)
         }
         
         self.failure_patterns = self._load_failure_patterns()
@@ -282,7 +367,7 @@ class LiveDataAnalyzer:
             'misfire': {
                 'components': ['COIL', 'SPARK_PLUG', 'INJECTOR', 'COMPRESSION'],
                 'patterns': [
-                    {'pid': 'rpm_deviation', 'condition': '> 150', 'weight': 0.4},
+                    {'pid': 'rpm', 'condition': 'fluctuating', 'weight': 0.4},
                     {'pid': 'short_term_fuel_trim', 'condition': 'fluctuating', 'weight': 0.3},
                     {'pid': 'o2_voltage', 'condition': 'fluctuating', 'weight': 0.3}
                 ]
@@ -292,7 +377,7 @@ class LiveDataAnalyzer:
                 'patterns': [
                     {'pid': 'o2_voltage', 'condition': '> 0.6', 'weight': 0.3},
                     {'pid': 'o2_cross_count', 'condition': '< 3', 'weight': 0.4},
-                    {'pid': 'o2_voltage_post', 'condition': 'stable > 0.6', 'weight': 0.3}
+                    {'pid': 'long_term_fuel_trim', 'condition': '> 5', 'weight': 0.3}
                 ]
             },
             'rich_mixture': {
@@ -302,6 +387,14 @@ class LiveDataAnalyzer:
                     {'pid': 'long_term_fuel_trim', 'condition': '< -15', 'weight': 0.35},
                     {'pid': 'o2_voltage', 'condition': '> 0.8', 'weight': 0.15},
                     {'pid': 'maf', 'condition': '> 6.0', 'weight': 0.15}
+                ]
+            },
+            'ignition_failure': {
+                'components': ['COIL', 'SPARK_PLUG', 'CKP_SENSOR'],
+                'patterns': [
+                    {'pid': 'rpm', 'condition': 'erratic', 'weight': 0.5},
+                    {'pid': 'timing_advance', 'condition': '< 5', 'weight': 0.3},
+                    {'pid': 'engine_load', 'condition': 'fluctuating', 'weight': 0.2}
                 ]
             }
         }
@@ -324,8 +417,15 @@ class LiveDataAnalyzer:
             'P0302': 'misfire',
             'P0303': 'misfire',
             'P0304': 'misfire',
+            'P0305': 'misfire',
+            'P0306': 'misfire',
             'P0420': 'catalyst_failure',
-            'P0430': 'catalyst_failure'
+            'P0430': 'catalyst_failure',
+            'P0350': 'ignition_failure',
+            'P0351': 'ignition_failure',
+            'P0352': 'ignition_failure',
+            'P0353': 'ignition_failure',
+            'P0354': 'ignition_failure'
         }
         
         pattern_key = dtc_pattern_map.get(dtc)
@@ -382,12 +482,12 @@ class LiveDataAnalyzer:
             elif '<' in condition:
                 threshold = float(condition.split('<')[1])
                 return value < threshold
-            elif 'fluctuating' in condition:
+            elif 'fluctuating' in condition or 'erratic' in condition:
                 # Verifica variação no histórico
-                if len(history) > 10:
-                    recent = [h.get(pid, 0) for h in history[-10:]]
+                if len(history) > 5:
+                    recent = [h.get(pid, 0) for h in history[-5:]]
                     variance = np.var(recent) if len(recent) > 0 else 0
-                    return variance > 0.05
+                    return variance > 50 if pid == 'rpm' else variance > 1.0
         except:
             pass
         return False
@@ -415,6 +515,10 @@ class LiveDataAnalyzer:
                 'test': 'Medir resistência do aquecimento entre pinos 3 e 4 (3-5Ω)',
                 'values': {'resistencia_aquecimento': (3.0, 5.0)}
             },
+            'O2_SENSOR_POST': {
+                'test': 'Medir resistência do aquecimento (3-5Ω) e verificar tensão pós-catalisador',
+                'values': {'resistencia_aquecimento': (3.0, 5.0)}
+            },
             'MAF_SENSOR': {
                 'test': 'Verificar tensão de saída com scanner (0.5-1.5V em marcha lenta)',
                 'values': {'tensao_saida': (0.5, 1.5)}
@@ -434,6 +538,10 @@ class LiveDataAnalyzer:
             'COMPRESSION': {
                 'test': 'Teste de compressão (mínimo 120 psi, variação < 10% entre cilindros)',
                 'values': {'compressao': (120.0, 180.0)}
+            },
+            'CKP_SENSOR': {
+                'test': 'Verificar sinal com osciloscópio e resistência (500-900Ω)',
+                'values': {'resistencia': (500.0, 900.0)}
             }
         }
         
@@ -448,8 +556,10 @@ class LiveDataAnalyzer:
             'SPARK_PLUG': '04C905616',
             'INJECTOR': '0261500298',
             'O2_SENSOR': '55236131',
+            'O2_SENSOR_POST': '36531-5R0-003',
             'MAF_SENSOR': '0281006322',
-            'FUEL_PRESSURE': '13577583'
+            'FUEL_PRESSURE': '13577583',
+            'CKP_SENSOR': '06A906433A'
         }
         
         return ComponentFailureProbability(
@@ -573,6 +683,30 @@ class QuickTestAssistant:
                 'time_seconds': 600,
                 'tools': ['Manômetro de compressão'],
                 'confirmation': 'Baixa compressão indica problemas em anéis, válvulas ou junta'
+            },
+            'CKP_SENSOR': {
+                'name': 'Teste do Sensor de Rotação',
+                'steps': [
+                    '1. Desconecte o sensor',
+                    '2. Meça resistência entre os terminais: 500-900 ohms',
+                    '3. Verifique folga do anel fônico (0.5-1.5mm)',
+                    '4. Com osciloscópio, verifique forma de onda'
+                ],
+                'time_seconds': 240,
+                'tools': ['Multímetro', 'Osciloscópio'],
+                'confirmation': 'Resistência fora ou sem sinal indica sensor com defeito'
+            },
+            'CATALYST': {
+                'name': 'Teste de Catalisador',
+                'steps': [
+                    '1. Com scanner, monitore O2 pré e pós-catalisador',
+                    '2. Motor em 2500 RPM: O2 pré deve oscilar, O2 pós deve estar estável',
+                    '3. Meça temperatura na entrada e saída com termômetro infravermelho',
+                    '4. Diferença deve ser > 100°C em carga'
+                ],
+                'time_seconds': 300,
+                'tools': ['Scanner', 'Termômetro infravermelho'],
+                'confirmation': 'O2 pós seguindo o pré ou diferença de temperatura baixa indica catalisador ineficiente'
             }
         }
     
@@ -642,7 +776,8 @@ class CoPilotoOficina:
             'knowledge_base': {},
             'recommended_tests': [],
             'final_recommendation': {},
-            'confidence_score': 0
+            'confidence_score': 0,
+            'success': True
         }
         
         # 1. Análise probabilística
@@ -697,7 +832,8 @@ class CoPilotoOficina:
             return {
                 'priority': 'BAIXA',
                 'message': 'Não foi possível determinar a causa com os dados atuais',
-                'action': 'Execute testes manuais ou consulte TSBs'
+                'action': 'Execute testes manuais ou consulte TSBs',
+                'action_plan': ['1. Execute diagnóstico manual', '2. Consulte TSBs do fabricante']
             }
         
         # Componente mais provável
@@ -792,13 +928,15 @@ if __name__ == "__main__":
         'o2_voltage': 0.32,
         'maf': 2.1,
         'rpm': 825,
-        'coolant_temp': 89
+        'coolant_temp': 89,
+        'engine_load': 35,
+        'timing_advance': 12
     }
     
     history_example = [
-        {'short_term_fuel_trim': 17.2, 'o2_voltage': 0.35},
-        {'short_term_fuel_trim': 18.8, 'o2_voltage': 0.31},
-        {'short_term_fuel_trim': 19.5, 'o2_voltage': 0.28}
+        {'short_term_fuel_trim': 17.2, 'o2_voltage': 0.35, 'rpm': 830},
+        {'short_term_fuel_trim': 18.8, 'o2_voltage': 0.31, 'rpm': 820},
+        {'short_term_fuel_trim': 19.5, 'o2_voltage': 0.28, 'rpm': 825}
     ]
     
     vehicle_info_example = {
