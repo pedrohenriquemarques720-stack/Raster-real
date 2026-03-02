@@ -9,7 +9,7 @@ import threading
 from datetime import datetime
 
 # Importando nossos módulos (vamos criar versões simplificadas)
-from obd_scanner import OBDScannerPro
+from obd_scanner import OBDScannerRevolucionario as OBDScannerPro
 from dtc_database import DTCDatabase
 from vehicle_profiles import VehicleDatabase
 
@@ -1014,4 +1014,5 @@ if st.session_state.connected:
     
     time.sleep(0.5)
     st.rerun()
+
 
