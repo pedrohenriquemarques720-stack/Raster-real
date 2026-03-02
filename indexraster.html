@@ -3,242 +3,245 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AUTOMOTIVE PRO - Sistema de Diagnóstico</title>
+    <title>Scanner Automotivo Pro</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <!-- HEADER PROFISSIONAL -->
-        <header class="header">
-            <div class="logo">
-                <div class="logo-icon">🔧</div>
-                <div class="logo-text">
-                    <h1>AUTOMOTIVE PRO</h1>
-                    <span>Diagnóstico Inteligente</span>
-                </div>
+        <!-- HEADER -->
+        <div class="header">
+            <div class="header-left">
+                <div class="logo">🔧</div>
+                <div class="title">SCANNER AUTOMOTIVO PRO</div>
             </div>
-            
-            <div class="header-status">
-                <div class="status-indicator" id="statusIndicator">
-                    <span class="led"></span>
-                    <span id="statusText">Desconectado</span>
-                </div>
-                <div class="vehicle-info" id="vehicleInfo">
-                    <span class="vin">---</span>
-                </div>
+            <div class="header-right">
+                <div class="status-led"></div>
+                <span>CONECTADO</span>
             </div>
-        </header>
+        </div>
 
-        <!-- MAIN DASHBOARD -->
-        <main class="dashboard">
-            <!-- SIDEBAR DE CONTROLE -->
-            <aside class="sidebar">
-                <div class="connection-panel">
-                    <h3>🔌 CONEXÃO</h3>
-                    <div class="connection-type">
-                        <button class="conn-btn active" data-conn="bluetooth">BLUETOOTH</button>
-                        <button class="conn-btn" data-conn="wifi">WiFi</button>
-                        <button class="conn-btn" data-conn="usb">USB</button>
-                    </div>
-                    
-                    <select id="deviceSelect" class="device-select">
-                        <option value="">Selecione o dispositivo...</option>
-                    </select>
-                    
-                    <button id="connectBtn" class="primary-btn">
-                        <span>🔌</span> CONECTAR
-                    </button>
-                </div>
-
-                <div class="vehicle-panel">
-                    <h3>🚗 VEÍCULO</h3>
-                    <div class="vehicle-details">
-                        <div class="detail-item">
-                            <span class="label">Fabricante:</span>
-                            <span class="value" id="manufacturer">---</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="label">Modelo:</span>
-                            <span class="value" id="model">---</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="label">Ano:</span>
-                            <span class="value" id="year">---</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="label">Motor:</span>
-                            <span class="value" id="engine">---</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="label">ECU:</span>
-                            <span class="value" id="ecu">---</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="actions-panel">
-                    <h3>⚡ AÇÕES</h3>
-                    <button class="action-btn" onclick="scanVehicle()">
-                        <span>🔍</span> ESCANEAR VEÍCULO
-                    </button>
-                    <button class="action-btn" onclick="readDTC()">
-                        <span>⚠️</span> LER FALHAS
-                    </button>
-                    <button class="action-btn" onclick="clearDTC()">
-                        <span>✅</span> LIMPAR FALHAS
-                    </button>
-                    <button class="action-btn" onclick="liveData()">
-                        <span>📊</span> DADOS REAIS
-                    </button>
-                    <button class="action-btn danger" onclick="reprogramECU()">
-                        <span>⚡</span> REPROGRAMAR ECU
-                    </button>
-                </div>
-            </aside>
-
-            <!-- ÁREA PRINCIPAL -->
-            <section class="main-area">
-                <!-- GAUGES (MEDIDORES) -->
-                <div class="gauges-grid">
-                    <div class="gauge-card rpm">
-                        <div class="gauge-header">
-                            <span class="gauge-title">RPM</span>
-                            <span class="gauge-unit">x1000</span>
-                        </div>
-                        <div class="gauge-value" id="rpmValue">0</div>
-                        <div class="gauge-bar">
-                            <div class="gauge-fill" id="rpmBar" style="width: 0%"></div>
-                        </div>
-                    </div>
-
-                    <div class="gauge-card speed">
-                        <div class="gauge-header">
-                            <span class="gauge-title">VELOCIDADE</span>
-                            <span class="gauge-unit">km/h</span>
-                        </div>
-                        <div class="gauge-value" id="speedValue">0</div>
-                        <div class="gauge-bar">
-                            <div class="gauge-fill" id="speedBar" style="width: 0%"></div>
-                        </div>
-                    </div>
-
-                    <div class="gauge-card temp">
-                        <div class="gauge-header">
-                            <span class="gauge-title">TEMP. MOTOR</span>
-                            <span class="gauge-unit">°C</span>
-                        </div>
-                        <div class="gauge-value" id="tempValue">0</div>
-                        <div class="gauge-bar">
-                            <div class="gauge-fill" id="tempBar" style="width: 0%"></div>
-                        </div>
-                    </div>
-
-                    <div class="gauge-card battery">
-                        <div class="gauge-header">
-                            <span class="gauge-title">BATERIA</span>
-                            <span class="gauge-unit">V</span>
-                        </div>
-                        <div class="gauge-value" id="batteryValue">0</div>
-                        <div class="gauge-bar">
-                            <div class="gauge-fill" id="batteryBar" style="width: 0%"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- GRÁFICOS EM TEMPO REAL -->
-                <div class="charts-row">
-                    <div class="chart-card">
-                        <h3>📈 RPM em Tempo Real</h3>
-                        <canvas id="rpmChart"></canvas>
-                    </div>
-                    <div class="chart-card">
-                        <h3>🌡️ Temperatura do Motor</h3>
-                        <canvas id="tempChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- TABELA DE DADOS -->
-                <div class="data-table-card">
-                    <h3>📊 DADOS DO MOTOR</h3>
-                    <table id="engineData">
-                        <thead>
-                            <tr>
-                                <th>Parâmetro</th>
-                                <th>Valor</th>
-                                <th>Unidade</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="engineDataBody"></tbody>
-                    </table>
-                </div>
-
-                <!-- CÓDIGOS DE FALHA -->
-                <div class="dtc-card">
-                    <h3>⚠️ CÓDIGOS DE FALHA (DTC)</h3>
-                    <table id="dtcTable">
-                        <thead>
-                            <tr>
-                                <th>Código</th>
-                                <th>Descrição</th>
-                                <th>Sistema</th>
-                                <th>Gravidade</th>
-                            </tr>
-                        </thead>
-                        <tbody id="dtcBody"></tbody>
-                    </table>
-                </div>
-
-                <!-- OSCILOSCÓPIO -->
-                <div class="oscilloscope-card">
-                    <h3>📈 OSCILOSCÓPIO</h3>
-                    <canvas id="oscilloscope"></canvas>
-                    <div class="osc-controls">
-                        <button class="osc-btn" onclick="startOsc()">▶️ INICIAR</button>
-                        <button class="osc-btn" onclick="stopOsc()">⏹️ PARAR</button>
-                        <select id="oscChannel">
-                            <option value="1">CH1 - Sensor Detonação</option>
-                            <option value="2">CH2 - Sinal Injeção</option>
-                            <option value="3">CH3 - Ignição</option>
+        <!-- MAIN GRID -->
+        <div class="main-grid">
+            <!-- COLUNA ESQUERDA - CONEXÃO -->
+            <div class="left-panel">
+                <div class="panel-title">CONECTAR</div>
+                
+                <div class="connection-info">
+                    <div class="info-row">
+                        <span class="info-label">Porta:</span>
+                        <select class="info-value" id="portSelect">
+                            <option>COM3</option>
+                            <option>COM4</option>
+                            <option>/dev/ttyUSB0</option>
                         </select>
                     </div>
+                    <div class="info-row">
+                        <span class="info-label">Baud:</span>
+                        <select class="info-value" id="baudSelect">
+                            <option>38400</option>
+                            <option>115200</option>
+                            <option>9600</option>
+                        </select>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Protocolo:</span>
+                        <span class="info-value" id="protocol">CAN 500kbps</span>
+                    </div>
                 </div>
-            </section>
 
-            <!-- PAINEL DIREITO -->
-            <aside class="right-panel">
-                <div class="live-data-panel">
-                    <h3>📡 DADOS EM TEMPO REAL</h3>
-                    <div class="live-data-list" id="liveData"></div>
+                <button class="connect-btn" id="connectBtn">
+                    <span class="led-small"></span>
+                    CONECTAR
+                </button>
+
+                <!-- INFORMAÇÕES DO VEÍCULO -->
+                <div class="vehicle-info">
+                    <div class="panel-subtitle">INFORMAÇÕES DO VEÍCULO</div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="label">Fabricante:</span>
+                            <span class="value" id="manufacturer">VOLKSWAGEN</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Modelo:</span>
+                            <span class="value" id="model">GOL 1.6 MSI</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Ano:</span>
+                            <span class="value" id="year">2024</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Motor:</span>
+                            <span class="value" id="engine">EA211 (16V)</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Câmbio:</span>
+                            <span class="value" id="transmission">MQ200 (MANUAL)</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">KM:</span>
+                            <span class="value" id="km">15.234 km</span>
+                        </div>
+                        <div class="info-item" style="grid-column: span 2;">
+                            <span class="label">VIN:</span>
+                            <span class="value" id="vin">9BWZZZ377VT004251</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="history-panel">
-                    <h3>📋 ÚLTIMAS LEITURAS</h3>
-                    <ul class="history-list" id="historyList"></ul>
+                <!-- DADOS EM TEMPO REAL -->
+                <div class="real-time-data">
+                    <div class="panel-subtitle">DADOS EM TEMPO REAL</div>
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <span class="label">RPM:</span>
+                            <span class="value" id="rpm">845</span>
+                            <span class="unit">rpm</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="label">TEMP. MOTOR:</span>
+                            <span class="value" id="temp">89</span>
+                            <span class="unit">°C</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="label">TENSÃO:</span>
+                            <span class="value" id="voltage">13.8</span>
+                            <span class="unit">v</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="label">PRESSÃO ÓLEO:</span>
+                            <span class="value" id="oilPressure">4.2</span>
+                            <span class="unit">bar</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="label">CARGA MOTOR:</span>
+                            <span class="value" id="engineLoad">23</span>
+                            <span class="unit">%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUNA CENTRAL - OSCILOSCÓPIO -->
+            <div class="center-panel">
+                <div class="panel-title">OSCILOSCÓPIO</div>
+                
+                <!-- Canal 1 -->
+                <div class="channel">
+                    <div class="channel-header">
+                        <span class="channel-label">CH1 - SENSOR DE DETONAÇÃO</span>
+                        <span class="channel-value" id="ch1Value">0.45 V</span>
+                    </div>
+                    <canvas class="oscilloscope" id="oscilloscope1" width="600" height="150"></canvas>
                 </div>
 
-                <div class="alerts-panel">
-                    <h3>🔔 ALERTAS</h3>
-                    <div class="alerts-list" id="alertsList"></div>
+                <!-- Canal 2 -->
+                <div class="channel">
+                    <div class="channel-header">
+                        <span class="channel-label">CH2 - SINAL DA BOMBA INJETORA</span>
+                        <span class="channel-value" id="ch2Value">12.4 V</span>
+                    </div>
+                    <canvas class="oscilloscope" id="oscilloscope2" width="600" height="150"></canvas>
                 </div>
-            </aside>
-        </main>
 
-        <!-- FOOTER COM LOG -->
-        <footer class="footer">
+                <!-- Controles do Osciloscópio -->
+                <div class="osc-controls">
+                    <div class="control-group">
+                        <span class="control-label">TIME/DIV:</span>
+                        <select id="timeDiv">
+                            <option>10ms</option>
+                            <option>5ms</option>
+                            <option>20ms</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <span class="control-label">VOLTS/DIV:</span>
+                        <select id="voltsDiv">
+                            <option>2V</option>
+                            <option>1V</option>
+                            <option>5V</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <span class="control-label">TRIGGER:</span>
+                        <select id="trigger">
+                            <option>CH1</option>
+                            <option>CH2</option>
+                            <option>AUTO</option>
+                        </select>
+                    </div>
+                    <button class="control-btn" id="startOsc">▶ INICIAR</button>
+                    <button class="control-btn" id="stopOsc">⏹ PARAR</button>
+                </div>
+            </div>
+
+            <!-- COLUNA DIREITA - CONTROLES -->
+            <div class="right-panel">
+                <div class="panel-title">CONTROLES</div>
+                
+                <!-- Botões de ação -->
+                <button class="action-btn" id="scanBtn">
+                    <span class="btn-icon">🔍</span>
+                    ESCANEAR VEÍCULO
+                </button>
+                
+                <button class="action-btn" id="readDTCBtn">
+                    <span class="btn-icon">⚠️</span>
+                    LER FALHAS
+                </button>
+                
+                <button class="action-btn" id="clearDTCBtn">
+                    <span class="btn-icon">✅</span>
+                    LIMPAR FALHAS
+                </button>
+                
+                <button class="action-btn" id="liveDataBtn">
+                    <span class="btn-icon">📊</span>
+                    DADOS REAIS
+                </button>
+                
+                <button class="action-btn danger" id="reprogramBtn">
+                    <span class="btn-icon">⚡</span>
+                    REPROGRAMAR ECU
+                </button>
+
+                <!-- Botões INICIAR/PARAR -->
+                <div class="start-stop">
+                    <button class="start-btn" id="startBtn">
+                        ▶ INICIAR
+                    </button>
+                    <button class="stop-btn" id="stopBtn">
+                        ⏹ PARAR
+                    </button>
+                </div>
+
+                <!-- Últimas leituras -->
+                <div class="history">
+                    <div class="panel-subtitle">ÚLTIMAS LEITURAS</div>
+                    <div class="history-list" id="historyList">
+                        <div class="history-item">15:23:45 - RPM: 2345</div>
+                        <div class="history-item">15:23:44 - RPM: 2310</div>
+                        <div class="history-item">15:23:43 - RPM: 2280</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer">
             <div class="log-area" id="logArea">
-                <span class="log-entry">> Sistema iniciado. Aguardando conexão...</span>
+                > Sistema pronto | Conectado ao veículo
             </div>
-            <div class="system-info">
-                <span>v2.1.0</span>
+            <div class="status-bar">
+                <span>CAN BUS: OK</span>
                 <span>|</span>
-                <span id="uptime">00:00:00</span>
+                <span>ECU: ONLINE</span>
+                <span>|</span>
+                <span>FW: v2.1.0</span>
             </div>
-        </footer>
+        </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
