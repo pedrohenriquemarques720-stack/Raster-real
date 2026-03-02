@@ -1,4 +1,5 @@
 # vehicle_profiles.py - Perfis de veículos
+from typing import Dict, List, Optional, Tuple
 
 class VehicleDatabase:
     """
@@ -8,7 +9,7 @@ class VehicleDatabase:
     def __init__(self):
         self.vehicles = self._build_database()
     
-    def _build_database(self):
+    def _build_database(self) -> Dict:
         """Constrói banco de dados de veículos"""
         return {
             'VOLKSWAGEN': {
@@ -269,7 +270,7 @@ class VehicleDatabase:
             }
         }
     
-    def identify_vehicle(self, vin: str) -> Dict:
+    def identify_vehicle(self, vin: str) -> Optional[Dict]:
         """Identifica veículo pelo VIN"""
         if not vin or vin == '---':
             return None
@@ -313,7 +314,7 @@ class VehicleDatabase:
             'year': year
         }
     
-    def get_profile(self, manufacturer: str, model: str) -> Dict:
+    def get_profile(self, manufacturer: str, model: str) -> Optional[Dict]:
         """Retorna perfil do veículo"""
         if manufacturer in self.vehicles:
             if model in self.vehicles[manufacturer]:
