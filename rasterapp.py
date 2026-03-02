@@ -1,4 +1,4 @@
-# app.py - Interface Original (Tudo na mesma tela)
+# app.py - Interface Original com Co-Piloto IA Integrado
 
 import streamlit as st
 import pandas as pd
@@ -434,6 +434,32 @@ st.markdown("""
     div[data-testid="stVerticalBlock"] {
         gap: 3px !important;
     }
+    
+    /* Cards do Co-Piloto */
+    .copilot-card {
+        background: #002800;
+        padding: 8px;
+        border-radius: 5px;
+        margin-top: 5px;
+        border-left: 3px solid #00ff00;
+    }
+    
+    .copilot-title {
+        color: #00ff00;
+        font-weight: bold;
+        font-size: 11px;
+    }
+    
+    .copilot-item {
+        font-size: 10px;
+        margin: 3px 0;
+        color: #ddd;
+    }
+    
+    .copilot-highlight {
+        color: #ff6600;
+        font-weight: bold;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -606,37 +632,74 @@ with col_left:
     else:
         st.markdown("<div style='color:#666; padding:5px;'>Nenhum código</div>", unsafe_allow_html=True)
     
-    # Diagnóstico Rápido
+    # Diagnóstico Rápido - CO-PILOTO IA
     if st.session_state.dtcs:
         st.markdown('<div class="panel-title" style="margin-top: 10px;">🤖 CO-PILOTO IA</div>', unsafe_allow_html=True)
         
-        if st.button("🔮 ANALISAR DTCs", use_container_width=True):
-            with st.spinner("Analisando padrões..."):
-                # Pega o primeiro DTC para diagnóstico
-                dtc_atual = st.session_state.dtcs[0]['code']
+        # Seleciona qual DTC analisar
+        dtc_options = [dtc['code'] for dtc in st.session_state.dtcs]
+        selected_dtc = st.selectbox("Selecione o DTC", dtc_options, key="dtc_select")
+        
+        if st.button("🔮 ANALISAR COM IA", use_container_width=True):
+            with st.spinner("IA analisando dados em tempo real..."):
+                # Prepara dados para diagnóstico
+                live_data_for_ia = {
+                    'short_term_fuel_trim': st.session_state.live_data.get('short_term_fuel_trim', 0),
+                    'long_term_fuel_trim': st.session_state.live_data.get('long_term_fuel_trim', 0),
+                    'o2_voltage': st.session_state.live_data.get('o2', 0),
+                    'maf': st.session_state.live_data.get('maf', 0),
+                    'rpm': st.session_state.live_data.get('rpm', 0),
+                    'engine_load': st.session_state.live_data.get('engine_load', 0),
+                    'timing_advance': st.session_state.live_data.get('timing', 0),
+                    'coolant_temp': st.session_state.live_data.get('temp', 0)
+                }
                 
                 # Executa diagnóstico com IA
                 resultado = st.session_state.copiloto.diagnose(
-                    dtc_atual,
-                    st.session_state.live_data,
+                    selected_dtc,
+                    live_data_for_ia,
                     st.session_state.live_history[-10:] if st.session_state.live_history else [],
                     st.session_state.vehicle_info
                 )
                 st.session_state.diagnosis_result = resultado
-                st.session_state.log.append(f"> IA analisou {dtc_atual}")
+                st.session_state.log.append(f"> IA analisou {selected_dtc}")
         
+        # Mostra resultados do diagnóstico
         if st.session_state.diagnosis_result:
             res = st.session_state.diagnosis_result
-            st.markdown(f"""
-            <div style='background:#002800; padding:8px; border-radius:5px; margin-top:5px;'>
-                <span style='color:#00ff00; font-weight:bold;'>🎯 PROBABILIDADES:</span>
-            """, unsafe_allow_html=True)
             
-            for p in res['probabilities'][:2]:
-                st.markdown(f"<div style='font-size:11px; margin:3px 0;'>• {p['component']}: {p['probability']}%</div>", unsafe_allow_html=True)
+            # Card de probabilidades
+            st.markdown('<div class="copilot-card">', unsafe_allow_html=True)
+            st.markdown('<div class="copilot-title">🎯 PROBABILIDADES DE FALHA</div>', unsafe_allow_html=True)
             
+            for p in res['probabilities'][:3]:
+                cor = "#00ff00" if p['probability'] > 70 else "#ffff00" if p['probability'] > 40 else "#ff6600"
+                st.markdown(f"""
+                <div class="copilot-item">
+                    <span style="color:{cor};">■</span> {p['component']}: <span class="copilot-highlight">{p['probability']}%</span>
+                    {f" (Peça: {p['part_number']})" if p['part_number'] else ""}
+                </div>
+                """, unsafe_allow_html=True)
+            
+            # Recomendação principal
             if res['final_recommendation']['action_plan']:
-                st.markdown(f"<div style='color:#ff6600; font-size:11px; margin-top:5px;'>{res['final_recommendation']['action_plan'][0]}</div>", unsafe_allow_html=True)
+                st.markdown(f"""
+                <div style="margin-top:5px; padding-top:5px; border-top:1px solid #004400;">
+                    <span style="color:#ff6600; font-weight:bold;">✅ RECOMENDAÇÃO:</span><br>
+                    <span style="font-size:10px;">{res['final_recommendation']['action_plan'][0]}</span>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            # TSB se disponível
+            if res['knowledge_base']['tsb']:
+                tsb = res['knowledge_base']['tsb'][0]
+                st.markdown(f"""
+                <div style="margin-top:5px; color:#aaa; font-size:9px;">
+                    📋 TSB: {tsb['root_cause'][:60]}...
+                </div>
+                """, unsafe_allow_html=True)
+            
+            st.markdown('</div>', unsafe_allow_html=True)
 
 # =============================================
 # COLUNA CENTRAL - Dados em Tempo Real
@@ -696,13 +759,22 @@ with col_center:
         </div>
         """, unsafe_allow_html=True)
     
-    # Parâmetros adicionais para diagnóstico
+    # Parâmetros adicionais para diagnóstico (STFT/LTFT/MAF)
     if st.session_state.connected:
-        col1, col2 = st.columns(2)
+        st.markdown("""
+        <div style="display: flex; gap: 10px; margin-top: 5px; padding: 5px; background: #222; border-radius: 4px;">
+        """, unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric("STFT", f"{data.get('short_term_fuel_trim', 0)}%", delta=None)
+            st.metric("STFT", f"{data.get('short_term_fuel_trim', 0)}%", 
+                     delta=None, delta_color="off")
         with col2:
-            st.metric("LTFT", f"{data.get('long_term_fuel_trim', 0)}%", delta=None)
+            st.metric("LTFT", f"{data.get('long_term_fuel_trim', 0)}%", 
+                     delta=None, delta_color="off")
+        with col3:
+            st.metric("MAF", f"{data.get('maf', 0)} g/s", 
+                     delta=None, delta_color="off")
 
 # =============================================
 # COLUNA DIREITA - Osciloscópio e Controles
@@ -766,6 +838,18 @@ with col_right:
         with cols[i%2]:
             if st.button(tool, key=f"tool_{i}", use_container_width=True):
                 st.session_state.log.append(f"> Executando: {tool}")
+    
+    # Últimas recomendações da IA
+    if st.session_state.diagnosis_result:
+        st.markdown('<div class="panel-title" style="margin-top:10px;">📋 ÚLTIMO DIAGNÓSTICO</div>', unsafe_allow_html=True)
+        res = st.session_state.diagnosis_result
+        st.markdown(f"""
+        <div style="font-size:10px; color:#aaa;">
+            <div><span style="color:#ff6600;">DTC:</span> {res['dtc']}</div>
+            <div><span style="color:#ff6600;">Confiança:</span> {res['confidence_score']}%</div>
+            <div style="margin-top:3px;">{res['final_recommendation']['action_plan'][0][:50]}...</div>
+        </div>
+        """, unsafe_allow_html=True)
 
 # =============================================
 # BOTTOM BAR
@@ -787,7 +871,7 @@ st.markdown(f"""
 # ATUALIZAÇÃO DE DADOS
 # =============================================
 if st.session_state.connected:
-    # Atualiza dados
+    # Atualiza dados com variação realista
     novo_dado = {
         'rpm': random.randint(750, 3500),
         'speed': random.randint(0, 120),
