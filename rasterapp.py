@@ -568,7 +568,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =============================================
-# INICIALIZAÇÃO
+# INICIALIZAÇÃO - CORRIGIDA
 # =============================================
 if 'scanner' not in st.session_state:
     st.session_state.scanner = OBDScannerPro()
@@ -576,11 +576,19 @@ if 'scanner' not in st.session_state:
     st.session_state.sgw = SGWAutoPass()
     st.session_state.visualizador = Visualizador3D()
     st.session_state.orcamento = OrcamentoAutomatico()
-    st.session_state.ecu_control = ECUControl(
-        protocol=ProtocolType.CAN_11BIT,
-        manufacturer="VOLKSWAGEN",
-        use_simulator=True  # Use False para CAN real
-    )
+    
+    # Inicialização do ECU Control com tratamento de erro
+    try:
+        st.session_state.ecu_control = ECUControl(
+            protocol=ProtocolType.CAN_11BIT,
+            manufacturer="VOLKSWAGEN",
+            use_simulator=True  # Use False para CAN real
+        )
+    except Exception as e:
+        st.error(f"Erro ao inicializar ECU Control: {e}")
+        # Cria um objeto dummy para evitar erros
+        st.session_state.ecu_control = None
+    
     st.session_state.dtc_db = DTCDatabase()
     st.session_state.vehicle_db = VehicleDatabase()
     st.session_state.connected = False
@@ -611,7 +619,8 @@ if 'scanner' not in st.session_state:
         'timing': 12,
         'short_term_fuel_trim': 2.5,
         'long_term_fuel_trim': 3.2,
-        'maf': 3.8
+        'maf': 3.8,
+        'lambda': 1.02
     }
     st.session_state.live_history = []
     st.session_state.log = ["> Sistema pronto"]
@@ -696,14 +705,6 @@ with col2:
                     'km': '15.234 km'
                 }
                 
-                # Atualiza dados no ECU control
-                st.session_state.ecu_control.live_data['rpm'] = st.session_state.live_data['rpm']
-                st.session_state.ecu_control.live_data['coolant_temp'] = st.session_state.live_data['temp']
-                st.session_state.ecu_control.live_data['speed'] = st.session_state.live_data['speed']
-                st.session_state.ecu_control.live_data['o2_voltage'] = st.session_state.live_data['o2']
-                st.session_state.ecu_control.live_data['stft'] = st.session_state.live_data['short_term_fuel_trim']
-                st.session_state.ecu_control.live_data['ltft'] = st.session_state.live_data['long_term_fuel_trim']
-                
                 st.session_state.log.append("> Conectado ao veículo")
                 st.rerun()
     else:
@@ -734,37 +735,31 @@ st.markdown('<div class="nav-menu-buttons">', unsafe_allow_html=True)
 col1, col2, col3, col4, col5, col6 = st.columns(6)
 
 with col1:
-    active_class = "active" if st.session_state.current_page == "Dashboard" else ""
     if st.button("📊 DASHBOARD", key="nav_dash"):
         st.session_state.current_page = "Dashboard"
         st.rerun()
 
 with col2:
-    active_class = "active" if st.session_state.current_page == "Controle Ativo" else ""
     if st.button("⚡ CONTROLE ATIVO", key="nav_tuning"):
         st.session_state.current_page = "Controle Ativo"
         st.rerun()
 
 with col3:
-    active_class = "active" if st.session_state.current_page == "Visualizador 3D" else ""
     if st.button("🔍 VISUALIZADOR 3D", key="nav_3d"):
         st.session_state.current_page = "Visualizador 3D"
         st.rerun()
 
 with col4:
-    active_class = "active" if st.session_state.current_page == "Modo Cliente" else ""
     if st.button("👤 MODO CLIENTE", key="nav_cliente"):
         st.session_state.current_page = "Modo Cliente"
         st.rerun()
 
 with col5:
-    active_class = "active" if st.session_state.current_page == "Diagnóstico IA" else ""
     if st.button("🤖 DIAGNÓSTICO IA", key="nav_ia"):
         st.session_state.current_page = "Diagnóstico IA"
         st.rerun()
 
 with col6:
-    active_class = "active" if st.session_state.current_page == "Orçamentos" else ""
     if st.button("💰 ORÇAMENTOS", key="nav_orc"):
         st.session_state.current_page = "Orçamentos"
         st.rerun()
@@ -772,16 +767,25 @@ with col6:
 st.markdown('</div>', unsafe_allow_html=True)
 
 # =============================================
-# ATUALIZA ECU_CONTROL COM DADOS AO VIVO
+# ATUALIZA ECU_CONTROL COM DADOS AO VIVO (CORRIGIDO)
 # =============================================
-if st.session_state.connected:
-    st.session_state.ecu_control.live_data['rpm'] = st.session_state.live_data['rpm']
-    st.session_state.ecu_control.live_data['coolant_temp'] = st.session_state.live_data['temp']
-    st.session_state.ecu_control.live_data['speed'] = st.session_state.live_data['speed']
-    st.session_state.ecu_control.live_data['o2_voltage'] = st.session_state.live_data['o2']
-    st.session_state.ecu_control.live_data['stft'] = st.session_state.live_data['short_term_fuel_trim']
-    st.session_state.ecu_control.live_data['ltft'] = st.session_state.live_data['long_term_fuel_trim']
-    st.session_state.ecu_control.live_data['lambda'] = st.session_state.live_data.get('lambda', 1.0)
+if st.session_state.connected and st.session_state.ecu_control is not None:
+    try:
+        # Verifica se o live_data existe no ecu_control
+        if not hasattr(st.session_state.ecu_control, 'live_data'):
+            st.session_state.ecu_control.live_data = {}
+            
+        # Atualiza todos os valores
+        st.session_state.ecu_control.live_data['rpm'] = st.session_state.live_data['rpm']
+        st.session_state.ecu_control.live_data['coolant_temp'] = st.session_state.live_data['temp']
+        st.session_state.ecu_control.live_data['speed'] = st.session_state.live_data['speed']
+        st.session_state.ecu_control.live_data['o2_voltage'] = st.session_state.live_data['o2']
+        st.session_state.ecu_control.live_data['stft'] = st.session_state.live_data.get('short_term_fuel_trim', 0)
+        st.session_state.ecu_control.live_data['ltft'] = st.session_state.live_data.get('long_term_fuel_trim', 0)
+        st.session_state.ecu_control.live_data['lambda'] = st.session_state.live_data.get('lambda', 1.0)
+        
+    except Exception as e:
+        st.session_state.log.append(f"> Erro ao atualizar ECU Control: {str(e)}")
 
 # =============================================
 # CONTEÚDO BASEADO NA PÁGINA SELECIONADA
@@ -992,9 +996,11 @@ elif st.session_state.current_page == "Controle Ativo":
     st.markdown("## ⚡ CONTROLE ATIVO DO MOTOR")
     st.markdown("### Ajuste de Parâmetros em Tempo Real (UDS Service 0x2E)")
     
-    # Verifica se está conectado
+    # Verifica se está conectado e se o ECU Control existe
     if not st.session_state.connected:
         st.warning("⚠️ Conecte-se a um veículo para usar o Controle Ativo")
+    elif st.session_state.ecu_control is None:
+        st.error("❌ Módulo ECU Control não disponível")
     else:
         # Status de segurança
         safety = st.session_state.ecu_control.check_safety_conditions()
@@ -1032,10 +1038,11 @@ elif st.session_state.current_page == "Controle Ativo":
             </div>
             """, unsafe_allow_html=True)
         with col_m3:
+            lambda_val = st.session_state.ecu_control.live_data.get('lambda', 1.02) if hasattr(st.session_state.ecu_control, 'live_data') else 1.02
             st.markdown(f"""
             <div class="metric-box">
                 <div class="metric-title">LAMBDA</div>
-                <div class="metric-number">{st.session_state.ecu_control.live_data.get('lambda', 1.02):.3f}</div>
+                <div class="metric-number">{lambda_val:.3f}</div>
             </div>
             """, unsafe_allow_html=True)
         with col_m4:
@@ -1134,12 +1141,14 @@ elif st.session_state.current_page == "Controle Ativo":
         st.markdown("---")
         st.markdown("### 🎯 OTIMIZAÇÃO AUTOMÁTICA")
         
+        lambda_atual = st.session_state.ecu_control.live_data.get('lambda', 1.02) if hasattr(st.session_state.ecu_control, 'live_data') else 1.02
+        
         col_l1, col_l2, col_l3 = st.columns(3)
         with col_l1:
             st.markdown(f"""
             <div style="background:#001a33; padding:10px; border-radius:5px; text-align:center;">
                 <span style="color:#888;">Lambda Atual</span><br>
-                <span style="color:#00ffff; font-size:28px; font-weight:bold;">{st.session_state.ecu_control.live_data.get('lambda', 1.02):.3f}</span>
+                <span style="color:#00ffff; font-size:28px; font-weight:bold;">{lambda_atual:.3f}</span>
             </div>
             """, unsafe_allow_html=True)
         with col_l2:
