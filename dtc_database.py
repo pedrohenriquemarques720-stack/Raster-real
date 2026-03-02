@@ -1,4 +1,5 @@
 # dtc_database.py - Banco de dados de códigos de falha
+from typing import Dict, List
 
 class DTCDatabase:
     """
@@ -8,7 +9,7 @@ class DTCDatabase:
     def __init__(self):
         self.dtc_database = self._build_database()
     
-    def _build_database(self):
+    def _build_database(self) -> Dict:
         """Constrói banco de dados de DTCs"""
         return {
             'P0300': {
@@ -262,13 +263,6 @@ class DTCDatabase:
                 'cause': 'Válvula EGR aberta continuamente',
                 'solution': 'Verificar válvula EGR',
                 'severity': 'Baixa'
-            },
-            'P0420': {
-                'description': 'Catalisador - eficiência abaixo do limite',
-                'system': 'Emissões',
-                'cause': 'Catalisador danificado, sonda lambda com defeito',
-                'solution': 'Substituir catalisador',
-                'severity': 'Média'
             },
             'P0442': {
                 'description': 'Sistema EVAP - vazamento pequeno',
