@@ -40,6 +40,7 @@ class OBDRealConnection:
         self.connection_type = ConnectionType.SIMULATOR
         self.supported_commands = {}
         self.live_data = {}
+        self.vin = None
         self._stop_thread = False
         self._data_thread = None
         
