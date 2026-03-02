@@ -1,4 +1,4 @@
-# app.py - Interface Moderna SEM streamlit-option-menu
+# app.py - Interface Completa com Controle Ativo do Motor
 
 import streamlit as st
 import pandas as pd
@@ -16,6 +16,7 @@ from co_piloto_oficina import CoPilotoOficina
 from sgw_autopass import SGWAutoPass
 from visualizacao_3d import Visualizador3D
 from orcamento_automatico import OrcamentoAutomatico
+from ecu_control import ECUControl, ProtocolType, create_tuning_interface
 
 # Configuração da página
 st.set_page_config(
@@ -475,6 +476,59 @@ st.markdown("""
         100% { transform: translateX(100%); }
     }
     
+    /* Controle Ativo - Sliders e Indicadores */
+    .tuning-card {
+        background: #1a1d24;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 10px 0;
+        border: 1px solid #00ffff;
+    }
+    
+    .safety-ok {
+        background: #004400;
+        padding: 10px;
+        border-radius: 5px;
+        border-left: 3px solid #00ff00;
+        margin-bottom: 15px;
+    }
+    
+    .safety-blocked {
+        background: #440000;
+        padding: 10px;
+        border-radius: 5px;
+        border-left: 3px solid #ff0000;
+        margin-bottom: 15px;
+        animation: pulse-red 1s infinite;
+    }
+    
+    @keyframes pulse-red {
+        0% { opacity: 1; }
+        50% { opacity: 0.8; background: #660000; }
+        100% { opacity: 1; }
+    }
+    
+    .metric-box {
+        background: #000;
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid #00ffff;
+    }
+    
+    .metric-title {
+        color: #888;
+        font-size: 11px;
+        text-transform: uppercase;
+    }
+    
+    .metric-number {
+        color: #00ffff;
+        font-size: 24px;
+        font-weight: bold;
+        font-family: 'Roboto Mono', monospace;
+    }
+    
     /* Remove Streamlit branding */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
@@ -522,6 +576,11 @@ if 'scanner' not in st.session_state:
     st.session_state.sgw = SGWAutoPass()
     st.session_state.visualizador = Visualizador3D()
     st.session_state.orcamento = OrcamentoAutomatico()
+    st.session_state.ecu_control = ECUControl(
+        protocol=ProtocolType.CAN_11BIT,
+        manufacturer="VOLKSWAGEN",
+        use_simulator=True  # Use False para CAN real
+    )
     st.session_state.dtc_db = DTCDatabase()
     st.session_state.vehicle_db = VehicleDatabase()
     st.session_state.connected = False
@@ -561,6 +620,7 @@ if 'scanner' not in st.session_state:
     st.session_state.modo_cliente = False
     st.session_state.assinatura = False
     st.session_state.orcamento_atual = None
+    st.session_state.tuning_results = None
 
 # =============================================
 # HEADER NEON
@@ -635,6 +695,15 @@ with col2:
                     'protocol': 'CAN-BUS 500K',
                     'km': '15.234 km'
                 }
+                
+                # Atualiza dados no ECU control
+                st.session_state.ecu_control.live_data['rpm'] = st.session_state.live_data['rpm']
+                st.session_state.ecu_control.live_data['coolant_temp'] = st.session_state.live_data['temp']
+                st.session_state.ecu_control.live_data['speed'] = st.session_state.live_data['speed']
+                st.session_state.ecu_control.live_data['o2_voltage'] = st.session_state.live_data['o2']
+                st.session_state.ecu_control.live_data['stft'] = st.session_state.live_data['short_term_fuel_trim']
+                st.session_state.ecu_control.live_data['ltft'] = st.session_state.live_data['long_term_fuel_trim']
+                
                 st.session_state.log.append("> Conectado ao veículo")
                 st.rerun()
     else:
@@ -643,6 +712,7 @@ with col2:
             st.session_state.sgw_unlocked = False
             st.session_state.dtcs = []
             st.session_state.diagnosis_result = None
+            st.session_state.tuning_results = None
             st.session_state.log.append("> Desconectado")
             st.rerun()
 
@@ -661,7 +731,7 @@ if st.session_state.connected and not st.session_state.sgw_unlocked:
 # =============================================
 st.markdown('<div class="nav-menu-buttons">', unsafe_allow_html=True)
 
-col1, col2, col3, col4, col5 = st.columns(5)
+col1, col2, col3, col4, col5, col6 = st.columns(6)
 
 with col1:
     active_class = "active" if st.session_state.current_page == "Dashboard" else ""
@@ -670,30 +740,48 @@ with col1:
         st.rerun()
 
 with col2:
+    active_class = "active" if st.session_state.current_page == "Controle Ativo" else ""
+    if st.button("⚡ CONTROLE ATIVO", key="nav_tuning"):
+        st.session_state.current_page = "Controle Ativo"
+        st.rerun()
+
+with col3:
     active_class = "active" if st.session_state.current_page == "Visualizador 3D" else ""
     if st.button("🔍 VISUALIZADOR 3D", key="nav_3d"):
         st.session_state.current_page = "Visualizador 3D"
         st.rerun()
 
-with col3:
+with col4:
     active_class = "active" if st.session_state.current_page == "Modo Cliente" else ""
     if st.button("👤 MODO CLIENTE", key="nav_cliente"):
         st.session_state.current_page = "Modo Cliente"
         st.rerun()
 
-with col4:
+with col5:
     active_class = "active" if st.session_state.current_page == "Diagnóstico IA" else ""
     if st.button("🤖 DIAGNÓSTICO IA", key="nav_ia"):
         st.session_state.current_page = "Diagnóstico IA"
         st.rerun()
 
-with col5:
+with col6:
     active_class = "active" if st.session_state.current_page == "Orçamentos" else ""
     if st.button("💰 ORÇAMENTOS", key="nav_orc"):
         st.session_state.current_page = "Orçamentos"
         st.rerun()
 
 st.markdown('</div>', unsafe_allow_html=True)
+
+# =============================================
+# ATUALIZA ECU_CONTROL COM DADOS AO VIVO
+# =============================================
+if st.session_state.connected:
+    st.session_state.ecu_control.live_data['rpm'] = st.session_state.live_data['rpm']
+    st.session_state.ecu_control.live_data['coolant_temp'] = st.session_state.live_data['temp']
+    st.session_state.ecu_control.live_data['speed'] = st.session_state.live_data['speed']
+    st.session_state.ecu_control.live_data['o2_voltage'] = st.session_state.live_data['o2']
+    st.session_state.ecu_control.live_data['stft'] = st.session_state.live_data['short_term_fuel_trim']
+    st.session_state.ecu_control.live_data['ltft'] = st.session_state.live_data['long_term_fuel_trim']
+    st.session_state.ecu_control.live_data['lambda'] = st.session_state.live_data.get('lambda', 1.0)
 
 # =============================================
 # CONTEÚDO BASEADO NA PÁGINA SELECIONADA
@@ -898,6 +986,200 @@ if st.session_state.current_page == "Dashboard":
             st.markdown('</div>', unsafe_allow_html=True)
 
 # =============================================
+# CONTROLE ATIVO (TUNING)
+# =============================================
+elif st.session_state.current_page == "Controle Ativo":
+    st.markdown("## ⚡ CONTROLE ATIVO DO MOTOR")
+    st.markdown("### Ajuste de Parâmetros em Tempo Real (UDS Service 0x2E)")
+    
+    # Verifica se está conectado
+    if not st.session_state.connected:
+        st.warning("⚠️ Conecte-se a um veículo para usar o Controle Ativo")
+    else:
+        # Status de segurança
+        safety = st.session_state.ecu_control.check_safety_conditions()
+        
+        if not safety.safe:
+            st.markdown(f"""
+            <div class="safety-blocked">
+                <span style="color:#ff0000; font-weight:bold;">⛔ BLOQUEADO POR SEGURANÇA</span><br>
+                <span style="color:#ff6666;">{safety.reason}</span><br>
+                <span style="color:#888; font-size:11px;">RPM: {safety.rpm} | Temp: {safety.temp}°C | Vel: {safety.speed} km/h</span>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown(f"""
+            <div class="safety-ok">
+                <span style="color:#00ff00; font-weight:bold;">✅ CONDIÇÕES DE SEGURANÇA OK</span><br>
+                <span style="color:#888; font-size:11px;">RPM: {safety.rpm} | Temp: {safety.temp}°C | Vel: {safety.speed} km/h</span>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # Métricas em tempo real
+        col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+        with col_m1:
+            st.markdown(f"""
+            <div class="metric-box">
+                <div class="metric-title">RPM ATUAL</div>
+                <div class="metric-number">{st.session_state.live_data['rpm']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with col_m2:
+            st.markdown(f"""
+            <div class="metric-box">
+                <div class="metric-title">TEMP MOTOR</div>
+                <div class="metric-number">{st.session_state.live_data['temp']}°C</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with col_m3:
+            st.markdown(f"""
+            <div class="metric-box">
+                <div class="metric-title">LAMBDA</div>
+                <div class="metric-number">{st.session_state.ecu_control.live_data.get('lambda', 1.02):.3f}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with col_m4:
+            st.markdown(f"""
+            <div class="metric-box">
+                <div class="metric-title">SONDA O2</div>
+                <div class="metric-number">{st.session_state.live_data['o2']:.3f}V</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown("---")
+        
+        # Interface de tuning principal
+        col_t1, col_t2 = st.columns(2)
+        
+        with col_t1:
+            st.markdown("### 🔧 Ajustes Manuais")
+            
+            # Ajuste de Mistura (Fuel Trim)
+            fuel_trim = st.slider(
+                "Ajuste de Mistura (Fuel Trim)",
+                min_value=-25.0,
+                max_value=25.0,
+                value=st.session_state.live_data.get('long_term_fuel_trim', 0.0),
+                step=0.5,
+                format="%.1f %%",
+                help="Ajuste fino da mistura ar/combustível. Valores positivos enriquecem, negativos empobrecem."
+            )
+            
+            if st.button("🚀 APLICAR AJUSTE DE MISTURA", key="apply_fuel", use_container_width=True):
+                with st.spinner("Enviando comando UDS 0x2E..."):
+                    resp = st.session_state.ecu_control.adjust_fuel_trim(fuel_trim, force=not safety.safe)
+                    if resp.success:
+                        st.success(f"✅ Ajuste aplicado! Resposta em {resp.response_time_ms:.1f}ms")
+                        st.balloons()
+                    else:
+                        st.error(f"❌ Falha: {resp.message}")
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # Ajuste de Marcha Lenta
+            idle_rpm = st.slider(
+                "RPM de Marcha Lenta",
+                min_value=600,
+                max_value=1200,
+                value=800,
+                step=10,
+                format="%d RPM",
+                help="RPM alvo para marcha lenta (quando veículo parado)"
+            )
+            
+            if st.button("🚀 APLICAR RPM", key="apply_rpm", use_container_width=True):
+                with st.spinner("Enviando comando UDS 0x2E..."):
+                    resp = st.session_state.ecu_control.adjust_idle_speed(idle_rpm, force=not safety.safe)
+                    if resp.success:
+                        st.success(f"✅ RPM ajustado! Resposta em {resp.response_time_ms:.1f}ms")
+                    else:
+                        st.error(f"❌ Falha: {resp.message}")
+        
+        with col_t2:
+            st.markdown("### ⚙️ Ajustes Avançados")
+            
+            # Ajuste de Injeção
+            inj_time = st.slider(
+                "Tempo de Injeção",
+                min_value=1.5,
+                max_value=8.0,
+                value=3.5,
+                step=0.1,
+                format="%.1f ms",
+                help="Tempo de abertura dos injetores (específico do fabricante)"
+            )
+            
+            if st.button("🚀 APLICAR INJEÇÃO", key="apply_inj", use_container_width=True):
+                with st.spinner("Enviando comando específico do fabricante..."):
+                    resp = st.session_state.ecu_control.adjust_injection_pulse(inj_time, force=not safety.safe)
+                    if resp.success:
+                        st.success(f"✅ Injeção ajustada! Resposta em {resp.response_time_ms:.1f}ms")
+                    else:
+                        st.error(f"❌ Falha: {resp.message}")
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # Reset Flex Fuel
+            st.markdown("### 🔄 Reset de Adaptações")
+            
+            if st.button("🔄 RESET FLEX FUEL", key="reset_flex", use_container_width=True):
+                with st.spinner("Resetando parâmetros autoadaptativos..."):
+                    resp = st.session_state.ecu_control.reset_flex_fuel(force=not safety.safe)
+                    if resp.success:
+                        st.success("✅ Parâmetros flex fuel resetados com sucesso!")
+                    else:
+                        st.error(f"❌ Falha: {resp.message}")
+        
+        # Otimização Automática
+        st.markdown("---")
+        st.markdown("### 🎯 OTIMIZAÇÃO AUTOMÁTICA")
+        
+        col_l1, col_l2, col_l3 = st.columns(3)
+        with col_l1:
+            st.markdown(f"""
+            <div style="background:#001a33; padding:10px; border-radius:5px; text-align:center;">
+                <span style="color:#888;">Lambda Atual</span><br>
+                <span style="color:#00ffff; font-size:28px; font-weight:bold;">{st.session_state.ecu_control.live_data.get('lambda', 1.02):.3f}</span>
+            </div>
+            """, unsafe_allow_html=True)
+        with col_l2:
+            st.markdown(f"""
+            <div style="background:#001a33; padding:10px; border-radius:5px; text-align:center;">
+                <span style="color:#888;">Sonda O2</span><br>
+                <span style="color:#00ffff; font-size:28px; font-weight:bold;">{st.session_state.live_data['o2']:.3f}V</span>
+            </div>
+            """, unsafe_allow_html=True)
+        with col_l3:
+            st.markdown(f"""
+            <div style="background:#001a33; padding:10px; border-radius:5px; text-align:center;">
+                <span style="color:#888;">STFT/LTFT</span><br>
+                <span style="color:#00ffff; font-size:28px; font-weight:bold;">{st.session_state.live_data.get('short_term_fuel_trim', 0):.1f}/{st.session_state.live_data.get('long_term_fuel_trim', 0):.1f}</span>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        if st.button("🚀 OTIMIZAR FUNCIONAMENTO (Lambda 1.0)", use_container_width=True):
+            with st.spinner("Otimizando parâmetros em tempo real..."):
+                results = st.session_state.ecu_control.auto_tune_to_lambda1(max_attempts=10)
+                st.session_state.tuning_results = results
+                
+                if results['success']:
+                    st.success(f"✅ Otimização concluída em {results['attempts']} tentativas!")
+                    col_r1, col_r2 = st.columns(2)
+                    with col_r1:
+                        st.metric("Lambda Final", f"{results['lambda_final']:.3f}", 
+                                 delta=f"{results['lambda_final'] - results['lambda_inicial']:.3f}")
+                    with col_r2:
+                        st.metric("Tempo Injeção Final", f"{results['injection_final']:.2f}ms")
+                else:
+                    st.error(f"❌ Otimização falhou: {results.get('reason', 'Erro desconhecido')}")
+        
+        # Logs Técnicos
+        with st.expander("📋 Logs Técnicos da ECU"):
+            logs = st.session_state.ecu_control.get_logs(15)
+            for log in logs:
+                st.code(f"[{log['timestamp']}] {log['level']}: {log['message']}")
+
+# =============================================
 # VISUALIZADOR 3D
 # =============================================
 elif st.session_state.current_page == "Visualizador 3D":
@@ -983,7 +1265,7 @@ elif st.session_state.current_page == "Visualizador 3D":
             </div>
             """, unsafe_allow_html=True)
         else:
-            st.info("Selecione um componente no diagnóstico")
+            st.info("Selecione um componente no diagnóstico para visualização 3D")
 
 # =============================================
 # MODO CLIENTE
@@ -1118,7 +1400,8 @@ if st.session_state.connected:
         'timing': random.randint(8, 22),
         'short_term_fuel_trim': round(random.uniform(-5, 15), 1),
         'long_term_fuel_trim': round(random.uniform(-8, 18), 1),
-        'maf': round(2.5 + random.random() * 3, 1)
+        'maf': round(2.5 + random.random() * 3, 1),
+        'lambda': round(random.uniform(0.95, 1.05), 3)
     }
     
     st.session_state.live_data = novo_dado
