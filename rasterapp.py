@@ -1,4 +1,4 @@
-# app.py - Interface do Scanner Automotivo Profissional
+# app.py - Interface do Scanner Automotivo Profissional (Tudo na mesma tela)
 
 import streamlit as st
 import pandas as pd
@@ -22,7 +22,7 @@ st.set_page_config(
 )
 
 # =============================================
-# CSS CORRIGIDO - VERSÃO COMPACTA PROFISSIONAL
+# CSS - ESTILO RASTER 3S (TUDO NA MESMA TELA)
 # =============================================
 st.markdown("""
 <style>
@@ -48,7 +48,7 @@ st.markdown("""
         border-radius: 10px;
     }
     
-    /* Header com gradiente */
+    /* Header com gradiente - IGUAL AO RASTER */
     .header {
         background: linear-gradient(135deg, #0047AB, #002B5C);
         padding: 12px 20px;
@@ -57,6 +57,7 @@ st.markdown("""
         display: flex;
         align-items: center;
         justify-content: space-between;
+        border-left: 5px solid #ff6600;
     }
     
     .logo {
@@ -96,35 +97,7 @@ st.markdown("""
         font-size: 12px;
     }
     
-    /* MAIN GRID - 3 COLUNAS FIXAS PROFISSIONAIS */
-    .main-grid {
-        display: grid;
-        grid-template-columns: 320px 1fr 320px;
-        gap: 12px;
-        margin-top: 12px;
-    }
-    
-    /* PANELS */
-    .left-panel, .center-panel, .right-panel {
-        background: #1a1a1a;
-        border-radius: 8px;
-        padding: 12px;
-        border: 1px solid #333;
-    }
-    
-    /* Panel Title */
-    .panel-title {
-        color: #ff6600;
-        font-size: 13px;
-        font-weight: bold;
-        margin-bottom: 10px;
-        padding-bottom: 3px;
-        border-bottom: 2px solid #ff6600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    /* Connection Bar - Estilo Autel */
+    /* Connection Bar - IGUAL AO RASTER */
     .connection-bar {
         background: #1a1a1a;
         padding: 12px;
@@ -183,7 +156,35 @@ st.markdown("""
         color: white;
     }
     
-    /* Vehicle Info - Estilo Raster */
+    /* MAIN GRID - 2 COLUNAS (TUDO NA MESMA TELA) */
+    .main-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 12px;
+    }
+    
+    /* PANELS */
+    .left-panel, .right-panel {
+        background: #1a1a1a;
+        border-radius: 8px;
+        padding: 12px;
+        border: 1px solid #333;
+    }
+    
+    /* Panel Title */
+    .panel-title {
+        color: #ff6600;
+        font-size: 13px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        padding-bottom: 3px;
+        border-bottom: 2px solid #ff6600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Vehicle Info */
     .info-row {
         display: flex;
         justify-content: space-between;
@@ -203,7 +204,7 @@ st.markdown("""
         text-align: right;
     }
     
-    /* DTC List - Estilo Profissional */
+    /* DTC List */
     .dtc-item {
         background: #330000;
         border-left: 3px solid #ff0000;
@@ -225,7 +226,7 @@ st.markdown("""
         color: #aaa;
     }
     
-    /* Function Tabs - Estilo Scanner */
+    /* Function Tabs */
     .function-tabs {
         display: flex;
         gap: 4px;
@@ -259,7 +260,7 @@ st.markdown("""
         font-weight: bold;
     }
     
-    /* LIVE DATA GRID - 2 COLUNAS PROFISSIONAIS */
+    /* LIVE DATA GRID - 2 COLUNAS */
     .live-data-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -308,66 +309,7 @@ st.markdown("""
         transition: 0.3s;
     }
     
-    /* Flashing Area */
-    .flashing-area {
-        text-align: center;
-        padding: 10px;
-    }
-    
-    .file-select {
-        background: #333;
-        padding: 15px;
-        border-radius: 8px;
-        border: 2px dashed #ff6600;
-        cursor: pointer;
-        margin-bottom: 12px;
-        transition: 0.3s;
-    }
-    
-    .file-select:hover {
-        background: #3a3a3a;
-    }
-    
-    .file-select div {
-        font-size: 11px;
-    }
-    
-    .progress-bar {
-        height: 20px;
-        background: #333;
-        border-radius: 10px;
-        overflow: hidden;
-        margin: 12px 0;
-        position: relative;
-    }
-    
-    .progress-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #00ff00, #00cc00);
-        width: 0%;
-        transition: 0.3s;
-    }
-    
-    .progress-text {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        color: #000;
-        font-weight: bold;
-        font-size: 11px;
-    }
-    
-    .flash-warning {
-        color: #ff6600;
-        font-size: 11px;
-        padding: 8px;
-        background: #331900;
-        border-radius: 5px;
-        border-left: 3px solid #ff6600;
-    }
-    
-    /* Oscilloscope Profissional */
+    /* Oscilloscope */
     .scope-channel {
         background: #000;
         padding: 8px;
@@ -424,7 +366,30 @@ st.markdown("""
         100% { transform: translateX(-100%) translateY(0); }
     }
     
-    /* Bottom Bar Profissional */
+    /* Quick Tools */
+    .tools-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 5px;
+        margin-top: 10px;
+    }
+    
+    .tool-btn {
+        background: #333;
+        color: white;
+        padding: 8px;
+        border: 1px solid #444;
+        border-radius: 5px;
+        font-size: 11px;
+        cursor: pointer;
+        text-align: center;
+    }
+    
+    .tool-btn:hover {
+        background: #ff6600;
+    }
+    
+    /* Bottom Bar */
     .bottom-bar {
         margin-top: 15px;
         background: #1a1a1a;
@@ -456,7 +421,7 @@ st.markdown("""
     footer {visibility: hidden;}
     .stDeployButton {display:none;}
     
-    /* Botões Profissionais */
+    /* Botões */
     .stButton > button {
         width: 100%;
         padding: 6px 8px !important;
@@ -475,7 +440,6 @@ st.markdown("""
     
     .stButton > button:hover {
         background-color: #ff8533 !important;
-        transform: translateY(-1px);
     }
     
     /* Colunas Streamlit */
@@ -485,35 +449,6 @@ st.markdown("""
     
     div[data-testid="stVerticalBlock"] {
         gap: 3px !important;
-    }
-    
-    /* Ajustes de fonte para textos longos */
-    .info-value, .conn-value, .dtc-desc {
-        font-size: 11px;
-        line-height: 1.3;
-    }
-    
-    .dtc-code {
-        font-size: 12px;
-    }
-    
-    /* Scrollbar customizada */
-    ::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-    }
-    
-    ::-webkit-scrollbar-track {
-        background: #1a1a1a;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: #ff6600;
-        border-radius: 3px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: #ff8533;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -526,7 +461,6 @@ if 'scanner' not in st.session_state:
     st.session_state.dtc_db = DTCDatabase()
     st.session_state.vehicle_db = VehicleDatabase()
     st.session_state.connected = False
-    st.session_state.current_tab = 'live'
     st.session_state.osc_running = False
     st.session_state.scanning = False
     st.session_state.progress = 0
@@ -629,15 +563,16 @@ with col2:
             st.rerun()
 
 # =============================================
-# MAIN GRID (3 COLUNAS FIXAS)
+# MAIN GRID (2 COLUNAS - TUDO NA MESMA TELA)
 # =============================================
 st.markdown('<div class="main-grid">', unsafe_allow_html=True)
 
 # =============================================
-# LEFT PANEL - Vehicle Info
+# LEFT PANEL - Vehicle Info e Dados em Tempo Real
 # =============================================
 st.markdown('<div class="left-panel">', unsafe_allow_html=True)
 
+# INFORMAÇÕES DO VEÍCULO
 st.markdown('<div class="panel-title">📋 INFORMAÇÕES DO VEÍCULO</div>', unsafe_allow_html=True)
 
 info_data = [
@@ -658,6 +593,7 @@ for label, value in info_data:
     </div>
     """, unsafe_allow_html=True)
 
+# CÓDIGOS DE FALHA
 st.markdown('<div class="panel-title" style="margin-top: 12px;">⚠️ CÓDIGOS DE FALHA (DTC)</div>', unsafe_allow_html=True)
 
 if st.session_state.dtcs:
@@ -675,213 +611,123 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-st.markdown('<div class="panel-title" style="margin-top: 12px;">📊 ESTATÍSTICAS</div>', unsafe_allow_html=True)
+# DADOS EM TEMPO REAL
+st.markdown('<div class="panel-title" style="margin-top: 12px;">📊 DADOS EM TEMPO REAL</div>', unsafe_allow_html=True)
 
-stats = [
-    ("Tempo de uso:", "00:00:00"),
-    ("Picos de RPM:", "0 rpm"),
-    ("Temp. máxima:", "0 °C")
-]
+data = st.session_state.live_data
 
-for label, value in stats:
-    st.markdown(f"""
-    <div class="info-row">
-        <span class="info-label">{label}</span>
-        <span class="info-value">{value}</span>
-    </div>
-    """, unsafe_allow_html=True)
+st.markdown('<div class="live-data-grid">', unsafe_allow_html=True)
 
-st.markdown('</div>', unsafe_allow_html=True)
+st.markdown(f"""
+<div class="live-item">
+    <div class="live-label">RPM</div>
+    <div class="live-value">{data['rpm']}<span class="live-unit">rpm</span></div>
+    <div class="live-graph"><div class="graph-fill" style="width: {min(data['rpm']/35, 100)}%;"></div></div>
+</div>
 
-# =============================================
-# CENTER PANEL - Main Functions
-# =============================================
-st.markdown('<div class="center-panel">', unsafe_allow_html=True)
+<div class="live-item">
+    <div class="live-label">TEMP. MOTOR</div>
+    <div class="live-value">{data['temp']}<span class="live-unit">°C</span></div>
+    <div class="live-graph"><div class="graph-fill" style="width: {data['temp']}%;"></div></div>
+</div>
 
-# Function Tabs
-st.markdown('<div class="function-tabs">', unsafe_allow_html=True)
+<div class="live-item">
+    <div class="live-label">PRESSÃO ÓLEO</div>
+    <div class="live-value">{data['oil_pressure']}<span class="live-unit">bar</span></div>
+    <div class="live-graph"><div class="graph-fill" style="width: {data['oil_pressure']*20}%;"></div></div>
+</div>
 
-col1, col2, col3, col4, col5 = st.columns(5)
+<div class="live-item">
+    <div class="live-label">SINAL O2</div>
+    <div class="live-value">{data['o2']}<span class="live-unit">V</span></div>
+    <div class="live-graph"><div class="graph-fill" style="width: {data['o2']*100}%;"></div></div>
+</div>
 
-with col1:
-    if st.button("📈 DADOS REAIS", key="tab_live"):
-        st.session_state.current_tab = 'live'
+<div class="live-item">
+    <div class="live-label">VELOCIDADE</div>
+    <div class="live-value">{data['speed']}<span class="live-unit">km/h</span></div>
+    <div class="live-graph"><div class="graph-fill" style="width: {min(data['speed'], 100)}%;"></div></div>
+</div>
 
-with col2:
-    if st.button("🔍 DIAGNÓSTICO", key="tab_dtc"):
-        st.session_state.current_tab = 'dtc'
+<div class="live-item">
+    <div class="live-label">TENSÃO BATERIA</div>
+    <div class="live-value">{data['battery']}<span class="live-unit">V</span></div>
+    <div class="live-graph"><div class="graph-fill" style="width: {(data['battery']-10)*25}%;"></div></div>
+</div>
 
-with col3:
-    if st.button("⚡ FLASH", key="tab_flash"):
-        st.session_state.current_tab = 'flash'
+<div class="live-item">
+    <div class="live-label">CARGA MOTOR</div>
+    <div class="live-value">{data['engine_load']}<span class="live-unit">%</span></div>
+    <div class="live-graph"><div class="graph-fill" style="width: {data['engine_load']}%;"></div></div>
+</div>
 
-with col4:
-    if st.button("📊 OSCILOSCÓPIO", key="tab_scope"):
-        st.session_state.current_tab = 'scope'
-
-with col5:
-    if st.button("⚙️ CONFIG", key="tab_config"):
-        st.session_state.current_tab = 'config'
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-# LIVE DATA TAB
-if st.session_state.current_tab == 'live':
-    st.markdown('<div class="panel-title" style="margin-top: 0;">📊 DADOS EM TEMPO REAL</div>', unsafe_allow_html=True)
-    
-    data = st.session_state.live_data
-    
-    st.markdown('<div class="live-data-grid">', unsafe_allow_html=True)
-    
-    st.markdown(f"""
-    <div class="live-item">
-        <div class="live-label">RPM</div>
-        <div class="live-value">{data['rpm']}<span class="live-unit">rpm</span></div>
-        <div class="live-graph"><div class="graph-fill" style="width: {min(data['rpm']/35, 100)}%;"></div></div>
-    </div>
-    
-    <div class="live-item">
-        <div class="live-label">TEMP. MOTOR</div>
-        <div class="live-value">{data['temp']}<span class="live-unit">°C</span></div>
-        <div class="live-graph"><div class="graph-fill" style="width: {data['temp']}%;"></div></div>
-    </div>
-    
-    <div class="live-item">
-        <div class="live-label">PRESSÃO ÓLEO</div>
-        <div class="live-value">{data['oil_pressure']}<span class="live-unit">bar</span></div>
-        <div class="live-graph"><div class="graph-fill" style="width: {data['oil_pressure']*20}%;"></div></div>
-    </div>
-    
-    <div class="live-item">
-        <div class="live-label">SINAL O2</div>
-        <div class="live-value">{data['o2']}<span class="live-unit">V</span></div>
-        <div class="live-graph"><div class="graph-fill" style="width: {data['o2']*100}%;"></div></div>
-    </div>
-    
-    <div class="live-item">
-        <div class="live-label">VELOCIDADE</div>
-        <div class="live-value">{data['speed']}<span class="live-unit">km/h</span></div>
-        <div class="live-graph"><div class="graph-fill" style="width: {min(data['speed'], 100)}%;"></div></div>
-    </div>
-    
-    <div class="live-item">
-        <div class="live-label">TENSÃO BATERIA</div>
-        <div class="live-value">{data['battery']}<span class="live-unit">V</span></div>
-        <div class="live-graph"><div class="graph-fill" style="width: {(data['battery']-10)*25}%;"></div></div>
-    </div>
-    
-    <div class="live-item">
-        <div class="live-label">CARGA MOTOR</div>
-        <div class="live-value">{data['engine_load']}<span class="live-unit">%</span></div>
-        <div class="live-graph"><div class="graph-fill" style="width: {data['engine_load']}%;"></div></div>
-    </div>
-    
-    <div class="live-item">
-        <div class="live-label">AVANÇO IGNIÇÃO</div>
-        <div class="live-value">{data['timing']}<span class="live-unit">°</span></div>
-        <div class="live-graph"><div class="graph-fill" style="width: {data['timing']*4}%;"></div></div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# DIAGNOSTIC TAB
-elif st.session_state.current_tab == 'dtc':
-    st.markdown('<div class="panel-title">🔍 DIAGNÓSTICO AVANÇADO</div>', unsafe_allow_html=True)
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        if st.button("🔍 ESCANEAR TODAS ECUs", use_container_width=True):
-            with st.spinner("Escaneando sistemas..."):
-                time.sleep(2)
-                st.session_state.dtcs = [
-                    {'code': 'P0301', 'description': 'Falha de ignição no cilindro 1', 'system': 'Motor'},
-                    {'code': 'P0420', 'description': 'Catalisador ineficiente', 'system': 'Emissões'},
-                    {'code': 'P0171', 'description': 'Mistura pobre', 'system': 'Combustível'}
-                ]
-                st.session_state.log.append("> Escaneamento concluído")
-    
-    with col2:
-        if st.button("✅ LIMPAR TODOS CÓDIGOS", use_container_width=True):
-            st.session_state.dtcs = []
-            st.session_state.log.append("> Códigos de falha limpos")
-            st.success("Códigos limpos com sucesso!")
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    if st.session_state.dtcs:
-        for dtc in st.session_state.dtcs:
-            st.markdown(f"""
-            <div class="dtc-item">
-                <div class="dtc-code">{dtc['code']}</div>
-                <div class="dtc-desc">{dtc['description']}</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-# FLASH TAB
-elif st.session_state.current_tab == 'flash':
-    st.markdown('<div class="flashing-area">', unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div class="file-select">
-        <div style="font-size: 30px; margin-bottom: 5px;">📂</div>
-        <div style="color: #ff6600; font-weight: bold;">SELECIONE O ARQUIVO .BIN</div>
-        <div style="color: #888; font-size: 10px;">.bin, .hex, .mot, .s19</div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("📖 LER ECU", key="read_ecu", use_container_width=True):
-            st.session_state.log.append("> Lendo ECU...")
-            st.session_state.progress = 0
-            for i in range(0, 101, 10):
-                st.session_state.progress = i
-                time.sleep(0.05)
-            st.session_state.log.append("> Leitura concluída")
-    
-    with col2:
-        if st.button("💾 GRAVAR ECU", key="write_ecu", use_container_width=True):
-            st.session_state.log.append("> Gravando ECU...")
-            st.session_state.progress = 0
-            for i in range(0, 101, 5):
-                st.session_state.progress = i
-                time.sleep(0.05)
-            st.session_state.log.append("> Gravação concluída")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("✅ VERIFICAR", key="verify_ecu", use_container_width=True):
-            st.session_state.log.append("> Verificação OK")
-    
-    with col2:
-        if st.button("💿 BACKUP", key="backup_ecu", use_container_width=True):
-            st.session_state.log.append("> Backup concluído")
-    
-    st.markdown(f"""
-    <div class="progress-bar">
-        <div class="progress-fill" style="width: {st.session_state.progress}%;"></div>
-        <div class="progress-text">{st.session_state.progress}%</div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div class="flash-warning">
-        ⚠️ NÃO DESLIGUE O VEÍCULO DURANTE A GRAVAÇÃO!
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+<div class="live-item">
+    <div class="live-label">AVANÇO IGNIÇÃO</div>
+    <div class="live-value">{data['timing']}<span class="live-unit">°</span></div>
+    <div class="live-graph"><div class="graph-fill" style="width: {data['timing']*4}%;"></div></div>
+</div>
+""", unsafe_allow_html=True)
 
 st.markdown('</div>', unsafe_allow_html=True)
 
+st.markdown('</div>', unsafe_allow_html=True)  # Fecha left-panel
+
 # =============================================
-# RIGHT PANEL - Oscilloscope & Tools
+# RIGHT PANEL - Controles, Osciloscópio e Ferramentas
 # =============================================
 st.markdown('<div class="right-panel">', unsafe_allow_html=True)
 
-st.markdown('<div class="panel-title">📊 OSCILOSCÓPIO</div>', unsafe_allow_html=True)
+# CONTROLES
+st.markdown('<div class="panel-title">⚡ CONTROLES</div>', unsafe_allow_html=True)
+
+col1, col2 = st.columns(2)
+
+with col1:
+    if st.button("🔍 ESCANEAR FALHAS", key="scan_btn"):
+        with st.spinner("Escaneando sistemas..."):
+            time.sleep(2)
+            st.session_state.dtcs = [
+                {'code': 'P0301', 'description': 'Falha de ignição no cilindro 1'},
+                {'code': 'P0420', 'description': 'Catalisador ineficiente'},
+                {'code': 'P0171', 'description': 'Mistura pobre'}
+            ]
+            st.session_state.log.append("> Escaneamento concluído")
+
+with col2:
+    if st.button("✅ LIMPAR FALHAS", key="clear_btn"):
+        st.session_state.dtcs = []
+        st.session_state.log.append("> Códigos de falha limpos")
+        st.success("Códigos limpos com sucesso!")
+
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("📖 LER ECU", key="read_btn"):
+        st.session_state.log.append("> Lendo ECU...")
+        st.session_state.progress = 0
+        for i in range(0, 101, 10):
+            st.session_state.progress = i
+            time.sleep(0.05)
+        st.session_state.log.append("> Leitura concluída")
+
+with col2:
+    if st.button("💾 BACKUP", key="backup_btn"):
+        st.session_state.log.append("> Fazendo backup...")
+        st.session_state.progress = 0
+        for i in range(0, 101, 10):
+            st.session_state.progress = i
+            time.sleep(0.05)
+        st.session_state.log.append("> Backup concluído")
+
+# Progress Bar
+st.markdown(f"""
+<div class="progress-bar">
+    <div class="progress-fill" style="width: {st.session_state.progress}%;"></div>
+    <div class="progress-text">{st.session_state.progress}%</div>
+</div>
+""", unsafe_allow_html=True)
+
+# OSCILOSCÓPIO
+st.markdown('<div class="panel-title" style="margin-top: 12px;">📊 OSCILOSCÓPIO</div>', unsafe_allow_html=True)
 
 col1, col2 = st.columns(2)
 with col1:
@@ -894,7 +740,7 @@ with col2:
 st.markdown("""
 <div class="scope-channel">
     <div class="channel-header">
-        <span class="channel-1">CH1 - DETONAÇÃO</span>
+        <span class="channel-1">CH1 - SENSOR DETONAÇÃO</span>
         <span class="channel-1">0.45V</span>
     </div>
     <div class="waveform"><div class="wave-line"></div></div>
@@ -909,17 +755,35 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="panel-title" style="margin-top: 12px;">🔧 FERRAMENTAS</div>', unsafe_allow_html=True)
+# FERRAMENTAS RÁPIDAS
+st.markdown('<div class="panel-title" style="margin-top: 12px;">🔧 FERRAMENTAS RÁPIDAS</div>', unsafe_allow_html=True)
 
-tools = ["Atuador", "Injetores", "Sangria ABS", "Reset"]
+tools = ["Atuador Borboleta", "Teste Injetores", "Sangria ABS", "Reset Adaptações"]
 cols = st.columns(2)
 for i, tool in enumerate(tools):
     with cols[i % 2]:
         if st.button(tool, key=f"tool_{i}", use_container_width=True):
             st.session_state.log.append(f"> Executando: {tool}")
 
-st.markdown('</div>', unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
+# ESTATÍSTICAS
+st.markdown('<div class="panel-title" style="margin-top: 12px;">📊 ESTATÍSTICAS</div>', unsafe_allow_html=True)
+
+stats = [
+    ("Tempo de uso:", "00:00:00"),
+    ("Picos de RPM:", f"{st.session_state.live_data['rpm']} rpm"),
+    ("Temp. máxima:", f"{st.session_state.live_data['temp']} °C")
+]
+
+for label, value in stats:
+    st.markdown(f"""
+    <div class="info-row">
+        <span class="info-label">{label}</span>
+        <span class="info-value">{value}</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)  # Fecha right-panel
+st.markdown('</div>', unsafe_allow_html=True)  # Fecha main-grid
 
 # =============================================
 # BOTTOM BAR
