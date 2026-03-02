@@ -1,4 +1,4 @@
-# app.py - Interface Completa com Controle Ativo do Motor
+# app.py - Interface Completa com Controle Ativo do Motor, Conexão Real e PIDs Brasileiros
 
 import streamlit as st
 import pandas as pd
@@ -17,6 +17,9 @@ from sgw_autopass import SGWAutoPass
 from visualizacao_3d import Visualizador3D
 from orcamento_automatico import OrcamentoAutomatico
 from ecu_control import ECUControl, ProtocolType, create_tuning_interface
+
+# NOVAS IMPORTAÇÕES - Conexão Real e PIDs Brasil
+from conexao_real import OBDRealConnection, ConnectionType, find_elm327_port
 
 # Configuração da página
 st.set_page_config(
@@ -568,7 +571,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =============================================
-# INICIALIZAÇÃO - CORRIGIDA
+# INICIALIZAÇÃO - CORRIGIDA COM CONEXÃO REAL
 # =============================================
 if 'scanner' not in st.session_state:
     st.session_state.scanner = OBDScannerPro()
@@ -576,6 +579,10 @@ if 'scanner' not in st.session_state:
     st.session_state.sgw = SGWAutoPass()
     st.session_state.visualizador = Visualizador3D()
     st.session_state.orcamento = OrcamentoAutomatico()
+    
+    # NOVO - Conexão real
+    st.session_state.real_connection = OBDRealConnection()
+    st.session_state.real_mode = False  # False = simulação, True = carro real
     
     # Inicialização do ECU Control com tratamento de erro
     try:
@@ -653,7 +660,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # =============================================
-# CONNECTION BAR MODERNA
+# CONNECTION BAR MODERNA - MODIFICADA COM CONEXÃO REAL
 # =============================================
 col1, col2 = st.columns([4, 1])
 
@@ -688,27 +695,58 @@ with col1:
 
 with col2:
     if not st.session_state.connected:
+        # NOVO - Opção de seleção de modo
+        modo = st.radio("Modo de conexão:", ["Simulação", "Carro Real"], horizontal=True)
+        st.session_state.real_mode = (modo == "Carro Real")
+        
         if st.button("🔌 CONECTAR", key="connect_btn"):
-            with st.spinner("Conectando ao veículo..."):
-                time.sleep(1.5)
-                st.session_state.connected = True
-                st.session_state.vehicle_info = {
-                    'manufacturer': 'Volkswagen',
-                    'model': 'Gol 1.6',
-                    'year': '2024',
-                    'engine': 'EA211',
-                    'transmission': 'Manual',
-                    'vin': '9BWZZZ377VT004251',
-                    'ecu': 'BOSCH ME17.9.65',
-                    'version': '03H906023AB',
-                    'protocol': 'CAN-BUS 500K',
-                    'km': '15.234 km'
-                }
-                
-                st.session_state.log.append("> Conectado ao veículo")
-                st.rerun()
+            if st.session_state.real_mode:
+                with st.spinner("Procurando dispositivo ELM327..."):
+                    port = find_elm327_port()
+                    if port:
+                        if st.session_state.real_connection.connect(port):
+                            st.session_state.connected = True
+                            st.session_state.vehicle_info = {
+                                'manufacturer': '---',
+                                'model': '---',
+                                'year': '---',
+                                'engine': '---',
+                                'transmission': '---',
+                                'vin': st.session_state.real_connection.vin or '---',
+                                'ecu': '---',
+                                'version': '---',
+                                'protocol': '---',
+                                'km': '---'
+                            }
+                            st.session_state.log.append(f"> Conectado ao veículo real em {port}")
+                            st.rerun()
+                        else:
+                            st.error("Falha na conexão. Verifique o cabo.")
+                    else:
+                        st.error("Nenhum dispositivo ELM327 encontrado")
+            else:
+                with st.spinner("Conectando em modo simulação..."):
+                    time.sleep(1.5)
+                    st.session_state.connected = True
+                    st.session_state.vehicle_info = {
+                        'manufacturer': 'Volkswagen',
+                        'model': 'Gol 1.6',
+                        'year': '2024',
+                        'engine': 'EA211',
+                        'transmission': 'Manual',
+                        'vin': '9BWZZZ377VT004251',
+                        'ecu': 'BOSCH ME17.9.65',
+                        'version': '03H906023AB',
+                        'protocol': 'CAN-BUS 500K',
+                        'km': '15.234 km'
+                    }
+                    
+                    st.session_state.log.append("> Conectado ao veículo (modo simulação)")
+                    st.rerun()
     else:
         if st.button("🔌 DESCONECTAR", key="disconnect_btn"):
+            if st.session_state.real_mode:
+                st.session_state.real_connection.disconnect()
             st.session_state.connected = False
             st.session_state.sgw_unlocked = False
             st.session_state.dtcs = []
@@ -786,6 +824,44 @@ if st.session_state.connected and st.session_state.ecu_control is not None:
         
     except Exception as e:
         st.session_state.log.append(f"> Erro ao atualizar ECU Control: {str(e)}")
+
+# =============================================
+# ATUALIZA DADOS (REAL OU SIMULADO) - NOVO
+# =============================================
+if st.session_state.connected:
+    if st.session_state.real_mode and st.session_state.real_connection.connected:
+        # Dados reais
+        dados_reais = st.session_state.real_connection.get_live_data()
+        st.session_state.live_data.update({
+            'rpm': dados_reais.get('rpm', 0),
+            'speed': dados_reais.get('speed', 0),
+            'temp': dados_reais.get('coolant_temp', 0),
+            'battery': dados_reais.get('battery', 12.0),
+            'short_term_fuel_trim': dados_reais.get('stft', 0),
+            'long_term_fuel_trim': dados_reais.get('ltft', 0),
+            'maf': dados_reais.get('maf', 0)
+        })
+    else:
+        # Dados simulados
+        novo_dado = {
+            'rpm': random.randint(750, 3500),
+            'speed': random.randint(0, 120),
+            'temp': random.randint(82, 98),
+            'oil_pressure': round(3.5 + random.random() * 1.5, 1),
+            'battery': round(12 + random.random() * 2, 1),
+            'engine_load': random.randint(15, 55),
+            'o2': round(0.7 + random.random() * 0.2, 2),
+            'timing': random.randint(8, 22),
+            'short_term_fuel_trim': round(random.uniform(-5, 15), 1),
+            'long_term_fuel_trim': round(random.uniform(-8, 18), 1),
+            'maf': round(2.5 + random.random() * 3, 1),
+            'lambda': round(random.uniform(0.95, 1.05), 3)
+        }
+        st.session_state.live_data = novo_dado
+        st.session_state.live_history.append(novo_dado)
+    
+    if len(st.session_state.live_history) > 50:
+        st.session_state.live_history.pop(0)
 
 # =============================================
 # CONTEÚDO BASEADO NA PÁGINA SELECIONADA
@@ -990,7 +1066,7 @@ if st.session_state.current_page == "Dashboard":
             st.markdown('</div>', unsafe_allow_html=True)
 
 # =============================================
-# CONTROLE ATIVO (TUNING)
+# CONTROLE ATIVO (TUNING) - COM PIDs BRASILEIROS
 # =============================================
 elif st.session_state.current_page == "Controle Ativo":
     st.markdown("## ⚡ CONTROLE ATIVO DO MOTOR")
@@ -1136,6 +1212,67 @@ elif st.session_state.current_page == "Controle Ativo":
                         st.success("✅ Parâmetros flex fuel resetados com sucesso!")
                     else:
                         st.error(f"❌ Falha: {resp.message}")
+        
+        # =========================================
+        # NOVA SEÇÃO - PIDs Brasileiros
+        # =========================================
+        with st.expander("🇧🇷 COMANDOS ESPECÍFICOS BRASIL"):
+            st.markdown("### Comandos exclusivos para veículos nacionais")
+            
+            tab_vw, tab_fiat, tab_gm = st.tabs(["Volkswagen", "Fiat", "GM"])
+            
+            with tab_vw:
+                st.markdown("#### Motor EA111/EA211 (Gol, Polo, Virtus)")
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("🔄 RESET FLEX FUEL VW", key="vw_reset_flex", use_container_width=True):
+                        with st.spinner("Resetando adaptação flex..."):
+                            resp = st.session_state.ecu_control.reset_vw_flex(force=not safety.safe)
+                            if resp.success:
+                                st.success("✅ Adaptação flex resetada!")
+                            else:
+                                st.error(f"❌ Falha: {resp.message}")
+                
+                with col2:
+                    if st.button("🔄 RESET MARCHA LENTA", key="vw_reset_idle", use_container_width=True):
+                        with st.spinner("Resetando adaptação de marcha lenta..."):
+                            resp = st.session_state.ecu_control.write_parameter_brasil(0xF102, 1, force=not safety.safe)
+                            if resp.success:
+                                st.success("✅ Marcha lenta resetada!")
+                            else:
+                                st.error(f"❌ Falha: {resp.message}")
+            
+            with tab_fiat:
+                st.markdown("#### Motor Fire/Firefly (Uno, Mobi, Argo)")
+                
+                idle_rpm_fiat = st.slider(
+                    "RPM de Marcha Lenta (Fiat)",
+                    min_value=650,
+                    max_value=950,
+                    value=800,
+                    step=10,
+                    key="fiat_idle"
+                )
+                
+                if st.button("⚡ APLICAR RPM FIAT", key="fiat_apply", use_container_width=True):
+                    with st.spinner("Ajustando marcha lenta..."):
+                        resp = st.session_state.ecu_control.adjust_fiat_idle(idle_rpm_fiat, force=not safety.safe)
+                        if resp.success:
+                            st.success(f"✅ Marcha lenta ajustada para {idle_rpm_fiat} RPM!")
+                        else:
+                            st.error(f"❌ Falha: {resp.message}")
+            
+            with tab_gm:
+                st.markdown("#### Motor CSS Prime/Ecotec (Onix, Tracker)")
+                
+                if st.button("🔄 RESET DETONAÇÃO GM", key="gm_reset_knock", use_container_width=True):
+                    with st.spinner("Resetando aprendizado de detonação..."):
+                        resp = st.session_state.ecu_control.reset_gm_knock(force=not safety.safe)
+                        if resp.success:
+                            st.success("✅ Aprendizado de detonação resetado!")
+                        else:
+                            st.error(f"❌ Falha: {resp.message}")
         
         # Otimização Automática
         st.markdown("---")
@@ -1395,28 +1532,10 @@ with col3:
     """, unsafe_allow_html=True)
 
 # =============================================
-# ATUALIZAÇÃO DE DADOS
+# ATUALIZAÇÃO DE DADOS - MODIFICADO
 # =============================================
 if st.session_state.connected:
-    novo_dado = {
-        'rpm': random.randint(750, 3500),
-        'speed': random.randint(0, 120),
-        'temp': random.randint(82, 98),
-        'oil_pressure': round(3.5 + random.random() * 1.5, 1),
-        'battery': round(12 + random.random() * 2, 1),
-        'engine_load': random.randint(15, 55),
-        'o2': round(0.7 + random.random() * 0.2, 2),
-        'timing': random.randint(8, 22),
-        'short_term_fuel_trim': round(random.uniform(-5, 15), 1),
-        'long_term_fuel_trim': round(random.uniform(-8, 18), 1),
-        'maf': round(2.5 + random.random() * 3, 1),
-        'lambda': round(random.uniform(0.95, 1.05), 3)
-    }
-    
-    st.session_state.live_data = novo_dado
-    st.session_state.live_history.append(novo_dado)
-    if len(st.session_state.live_history) > 50:
-        st.session_state.live_history.pop(0)
-    
+    # A atualização já é feita na seção "ATUALIZA DADOS" acima
+    # Este bloco só existe para manter a compatibilidade com o código original
     time.sleep(1)
     st.rerun()
