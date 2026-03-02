@@ -8,7 +8,7 @@ import random
 import threading
 from datetime import datetime
 
-# Importando nossos módulos (vamos criar versões simplificadas)
+# Importando nossos módulos
 from obd_scanner import OBDScannerRevolucionario as OBDScannerPro
 from dtc_database import DTCDatabase
 from vehicle_profiles import VehicleDatabase
@@ -22,7 +22,7 @@ st.set_page_config(
 )
 
 # =============================================
-# CSS IDÊNTICO AO HTML ORIGINAL
+# CSS CORRIGIDO - ÚNICO E SEM COMENTÁRIOS INVÁLIDOS
 # =============================================
 st.markdown("""
 <style>
@@ -34,85 +34,6 @@ st.markdown("""
         font-family: 'Segoe UI', 'Arial', sans-serif;
     }
 
-    # Adicione este CSS no início do app.py (dentro do st.markdown)
-
-/* MAIN GRID CORRIGIDO - EXPANDIDO */
-.main-grid {
-    display: grid;
-    grid-template-columns: 350px 1fr 350px;  /* Aumentado de 300px para 350px */
-    gap: 20px;
-    margin-top: 20px;
-}
-
-/* LEFT PANEL - MAIOR */
-.left-panel {
-    background: #1a1a1a;
-    border-radius: 8px;
-    padding: 20px;  /* Aumentado padding */
-    width: 100%;
-}
-
-/* CENTER PANEL - OCUPA ESPAÇO RESTANTE */
-.center-panel {
-    background: #1a1a1a;
-    border-radius: 8px;
-    padding: 20px;
-    width: 100%;
-}
-
-/* RIGHT PANEL - MAIOR */
-.right-panel {
-    background: #1a1a1a;
-    border-radius: 8px;
-    padding: 20px;
-    width: 100%;
-}
-
-/* LIVE DATA GRID - 2 COLUNAS OCUPANDO TUDO */
-.live-data-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;  /* Aumentado gap */
-    width: 100%;
-}
-
-/* LIVE ITEMS - MAIORES */
-.live-item {
-    background: #333;
-    padding: 20px;  /* Aumentado padding */
-    border-radius: 5px;
-    border-left: 3px solid #00ff00;
-    width: 100%;
-}
-
-/* CONNECTION BAR - MAIS LARGA */
-.connection-bar {
-    background: #1a1a1a;
-    padding: 20px;  /* Aumentado padding */
-    border-radius: 8px;
-    margin-bottom: 20px;
-    display: flex;
-    gap: 20px;
-    align-items: center;
-    border-left: 5px solid #ff6600;
-    width: 100%;
-}
-
-/* CONN INFO - ESPAÇADO */
-.conn-info {
-    display: flex;
-    gap: 40px;  /* Aumentado gap */
-    flex: 1;
-    flex-wrap: wrap;
-}
-
-/* TABLES E BOTÕES - OCUPAM ESPAÇO */
-.stButton > button {
-    width: 100%;
-    padding: 12px !important;  /* Botões maiores */
-    font-size: 14px !important;
-}
-    
     .stApp {
         background: #1a1a1a;
         color: #ffffff;
@@ -175,21 +96,65 @@ st.markdown("""
         font-family: 'Courier New', monospace;
     }
     
-    /* Connection Bar */
+    /* MAIN GRID - VERSÃO EXPANDIDA (350px) */
+    .main-grid {
+        display: grid;
+        grid-template-columns: 350px 1fr 350px;
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    /* LEFT PANEL - MAIOR */
+    .left-panel {
+        background: #1a1a1a;
+        border-radius: 8px;
+        padding: 20px;
+        width: 100%;
+    }
+    
+    /* CENTER PANEL - OCUPA ESPAÇO */
+    .center-panel {
+        background: #1a1a1a;
+        border-radius: 8px;
+        padding: 20px;
+        width: 100%;
+    }
+    
+    /* RIGHT PANEL - MAIOR */
+    .right-panel {
+        background: #1a1a1a;
+        border-radius: 8px;
+        padding: 20px;
+        width: 100%;
+    }
+    
+    /* Panel Title */
+    .panel-title {
+        color: #ff6600;
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 15px;
+        padding-bottom: 5px;
+        border-bottom: 2px solid #ff6600;
+        text-transform: uppercase;
+    }
+    
+    /* Connection Bar - VERSÃO ÚNICA E EXPANDIDA */
     .connection-bar {
         background: #1a1a1a;
-        padding: 15px;
+        padding: 20px;
         border-radius: 8px;
         margin-bottom: 20px;
         display: flex;
         gap: 20px;
         align-items: center;
         border-left: 5px solid #ff6600;
+        width: 100%;
     }
     
     .conn-info {
         display: flex;
-        gap: 30px;
+        gap: 40px;
         flex: 1;
         flex-wrap: wrap;
     }
@@ -230,31 +195,6 @@ st.markdown("""
     .conn-button.off {
         background: #ff0000;
         color: white;
-    }
-    
-    /* Main Grid */
-    .main-grid {
-        display: grid;
-        grid-template-columns: 300px 1fr 300px;
-        gap: 20px;
-        margin-top: 20px;
-    }
-    
-    /* Panels */
-    .panel {
-        background: #1a1a1a;
-        border-radius: 8px;
-        padding: 15px;
-    }
-    
-    .panel-title {
-        color: #ff6600;
-        font-size: 14px;
-        font-weight: bold;
-        margin-bottom: 15px;
-        padding-bottom: 5px;
-        border-bottom: 2px solid #ff6600;
-        text-transform: uppercase;
     }
     
     /* Vehicle Info */
@@ -328,18 +268,21 @@ st.markdown("""
         font-weight: bold;
     }
     
-    /* Live Data Grid */
+    /* LIVE DATA GRID - EXPANDIDO */
     .live-data-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+        gap: 15px;
+        width: 100%;
     }
     
+    /* LIVE ITEMS - MAIORES */
     .live-item {
         background: #333;
-        padding: 15px;
+        padding: 20px;
         border-radius: 5px;
         border-left: 3px solid #00ff00;
+        width: 100%;
     }
     
     .live-label {
@@ -514,15 +457,16 @@ st.markdown("""
     footer {visibility: hidden;}
     .stDeployButton {display:none;}
     
-    /* Botões personalizados */
+    /* TABLES E BOTÕES - OCUPAM ESPAÇO */
     .stButton > button {
         width: 100%;
+        padding: 12px !important;
+        font-size: 14px !important;
         background-color: #ff6600 !important;
         color: white !important;
         font-weight: bold !important;
         border: none !important;
         border-radius: 5px !important;
-        padding: 10px !important;
         margin: 2px 0 !important;
     }
     
@@ -630,7 +574,6 @@ with col2:
     if not st.session_state.connected:
         if st.button("🔌 CONECTAR", key="connect_main"):
             with st.spinner("Conectando ao veículo..."):
-                # Modo simulação para testes
                 st.session_state.connected = True
                 st.session_state.vehicle_info = {
                     'manufacturer': 'Volkswagen',
@@ -1000,7 +943,6 @@ with col1:
 # ATUALIZAÇÃO DE DADOS EM TEMPO REAL
 # =============================================
 if st.session_state.connected:
-    # Atualiza dados com simulação realista
     st.session_state.live_data = {
         'rpm': random.randint(750, 3500),
         'speed': random.randint(0, 120),
@@ -1014,5 +956,3 @@ if st.session_state.connected:
     
     time.sleep(0.5)
     st.rerun()
-
-
