@@ -7,6 +7,7 @@ import time
 import random
 import threading
 from datetime import datetime
+from enum import Enum
 
 # Importando nossos módulos
 from obd_scanner import OBDScannerRevolucionario as OBDScannerPro
@@ -18,8 +19,40 @@ from visualizacao_3d import Visualizador3D
 from orcamento_automatico import OrcamentoAutomatico
 from ecu_control import ECUControl, ProtocolType, create_tuning_interface
 
-# NOVAS IMPORTAÇÕES - Conexão Real e PIDs Brasil
-from conexao_real import OBDRealConnection, ConnectionType, find_elm327_port
+# =============================================
+# TRATAMENTO DE ERRO PARA CONEXÃO REAL
+# =============================================
+try:
+    from conexao_real import OBDRealConnection, ConnectionType, find_elm327_port
+    CONEXAO_REAL_AVAILABLE = True
+except ImportError as e:
+    CONEXAO_REAL_AVAILABLE = False
+    print(f"⚠️ Módulo de conexão real não disponível: {e}")
+    
+    # Define classes dummy para evitar erros
+    class ConnectionType(Enum):
+        USB = "USB"
+        BLUETOOTH = "Bluetooth"
+        WIFI = "WiFi"
+        SIMULATOR = "Simulador"
+    
+    class OBDRealConnection:
+        def __init__(self):
+            self.connected = False
+            self.vin = None
+            self.live_data = {}
+        
+        def connect(self, *args, **kwargs):
+            return False
+        
+        def disconnect(self):
+            pass
+        
+        def get_live_data(self):
+            return {}
+    
+    def find_elm327_port():
+        return None
 
 # Configuração da página
 st.set_page_config(
@@ -580,9 +613,14 @@ if 'scanner' not in st.session_state:
     st.session_state.visualizador = Visualizador3D()
     st.session_state.orcamento = OrcamentoAutomatico()
     
-    # NOVO - Conexão real
-    st.session_state.real_connection = OBDRealConnection()
-    st.session_state.real_mode = False  # False = simulação, True = carro real
+    # NOVO - Conexão real com tratamento de erro
+    try:
+        st.session_state.real_connection = OBDRealConnection()
+        st.session_state.real_mode = False  # False = simulação, True = carro real
+    except Exception as e:
+        st.session_state.real_connection = None
+        st.session_state.real_mode = False
+        print(f"Erro ao inicializar conexão real: {e}")
     
     # Inicialização do ECU Control com tratamento de erro
     try:
@@ -695,35 +733,39 @@ with col1:
 
 with col2:
     if not st.session_state.connected:
-        # NOVO - Opção de seleção de modo
+        # Opção de seleção de modo
         modo = st.radio("Modo de conexão:", ["Simulação", "Carro Real"], horizontal=True)
         st.session_state.real_mode = (modo == "Carro Real")
         
         if st.button("🔌 CONECTAR", key="connect_btn"):
             if st.session_state.real_mode:
-                with st.spinner("Procurando dispositivo ELM327..."):
-                    port = find_elm327_port()
-                    if port:
-                        if st.session_state.real_connection.connect(port):
-                            st.session_state.connected = True
-                            st.session_state.vehicle_info = {
-                                'manufacturer': '---',
-                                'model': '---',
-                                'year': '---',
-                                'engine': '---',
-                                'transmission': '---',
-                                'vin': st.session_state.real_connection.vin or '---',
-                                'ecu': '---',
-                                'version': '---',
-                                'protocol': '---',
-                                'km': '---'
-                            }
-                            st.session_state.log.append(f"> Conectado ao veículo real em {port}")
-                            st.rerun()
+                # Verifica se o módulo de conexão real está disponível
+                if not CONEXAO_REAL_AVAILABLE or st.session_state.real_connection is None:
+                    st.error("❌ Módulo de conexão real não disponível. Instale as bibliotecas necessárias: pip install obd pyserial")
+                else:
+                    with st.spinner("Procurando dispositivo ELM327..."):
+                        port = find_elm327_port()
+                        if port:
+                            if st.session_state.real_connection.connect(port):
+                                st.session_state.connected = True
+                                st.session_state.vehicle_info = {
+                                    'manufacturer': '---',
+                                    'model': '---',
+                                    'year': '---',
+                                    'engine': '---',
+                                    'transmission': '---',
+                                    'vin': st.session_state.real_connection.vin or '---',
+                                    'ecu': '---',
+                                    'version': '---',
+                                    'protocol': '---',
+                                    'km': '---'
+                                }
+                                st.session_state.log.append(f"> Conectado ao veículo real em {port}")
+                                st.rerun()
+                            else:
+                                st.error("Falha na conexão. Verifique o cabo.")
                         else:
-                            st.error("Falha na conexão. Verifique o cabo.")
-                    else:
-                        st.error("Nenhum dispositivo ELM327 encontrado")
+                            st.error("Nenhum dispositivo ELM327 encontrado. Conecte o cabo e tente novamente.")
             else:
                 with st.spinner("Conectando em modo simulação..."):
                     time.sleep(1.5)
@@ -745,8 +787,11 @@ with col2:
                     st.rerun()
     else:
         if st.button("🔌 DESCONECTAR", key="disconnect_btn"):
-            if st.session_state.real_mode:
-                st.session_state.real_connection.disconnect()
+            if st.session_state.real_mode and st.session_state.real_connection is not None:
+                try:
+                    st.session_state.real_connection.disconnect()
+                except:
+                    pass
             st.session_state.connected = False
             st.session_state.sgw_unlocked = False
             st.session_state.dtcs = []
@@ -829,18 +874,24 @@ if st.session_state.connected and st.session_state.ecu_control is not None:
 # ATUALIZA DADOS (REAL OU SIMULADO) - NOVO
 # =============================================
 if st.session_state.connected:
-    if st.session_state.real_mode and st.session_state.real_connection.connected:
+    if (st.session_state.real_mode and 
+        st.session_state.real_connection is not None and 
+        hasattr(st.session_state.real_connection, 'connected') and 
+        st.session_state.real_connection.connected):
         # Dados reais
-        dados_reais = st.session_state.real_connection.get_live_data()
-        st.session_state.live_data.update({
-            'rpm': dados_reais.get('rpm', 0),
-            'speed': dados_reais.get('speed', 0),
-            'temp': dados_reais.get('coolant_temp', 0),
-            'battery': dados_reais.get('battery', 12.0),
-            'short_term_fuel_trim': dados_reais.get('stft', 0),
-            'long_term_fuel_trim': dados_reais.get('ltft', 0),
-            'maf': dados_reais.get('maf', 0)
-        })
+        try:
+            dados_reais = st.session_state.real_connection.get_live_data()
+            st.session_state.live_data.update({
+                'rpm': dados_reais.get('rpm', st.session_state.live_data.get('rpm', 0)),
+                'speed': dados_reais.get('speed', st.session_state.live_data.get('speed', 0)),
+                'temp': dados_reais.get('coolant_temp', st.session_state.live_data.get('temp', 0)),
+                'battery': dados_reais.get('battery', st.session_state.live_data.get('battery', 12.0)),
+                'short_term_fuel_trim': dados_reais.get('stft', st.session_state.live_data.get('short_term_fuel_trim', 0)),
+                'long_term_fuel_trim': dados_reais.get('ltft', st.session_state.live_data.get('long_term_fuel_trim', 0)),
+                'maf': dados_reais.get('maf', st.session_state.live_data.get('maf', 0))
+            })
+        except Exception as e:
+            st.session_state.log.append(f"> Erro ao ler dados reais: {str(e)}")
     else:
         # Dados simulados
         novo_dado = {
