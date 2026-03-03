@@ -637,8 +637,6 @@ elif st.session_state.current_page == "Diagnóstico IA":
             res = st.session_state.analysis_result
             cor_urgencia = "#ff0000" if res['urgencia'] == 'ALTA' else "#ffaa00"
             
-            # ===== INÍCIO DO BLOCO DO st.markdown =====
-            # Linha 700 aproximadamente
             st.markdown(f"""
             <div class="cliente-card">
                 <div class="cliente-titulo">🔍 DIAGNÓSTICO SIMPLIFICADO</div>
@@ -700,8 +698,21 @@ elif st.session_state.current_page == "Diagnóstico IA":
                     <span>Mecânica Rápida (8km)</span>
                 </div>
             </div>
-            """, unsafe_allow_html=True)  # <-- LINHA 716 - FECHA O st.markdown
-            # ===== FIM DO BLOCO =====
+            """, unsafe_allow_html=True)
+            
+        else:
+            st.markdown("""
+            <div class="cliente-card">
+                <div class="cliente-titulo">👋 BEM-VINDO</div>
+                <div class="cliente-texto" style="text-align:center;">
+                    Selecione um código de falha e execute a análise<br>
+                    para gerar uma orientação para seu cliente.
+                </div>
+                <div style="text-align:center; margin-top:20px;">
+                    <span style="font-size:48px;">🔧</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
             
         else:
             st.markdown("""
@@ -1092,6 +1103,7 @@ with col2:
 if st.session_state.connected:
     time.sleep(1)
     st.rerun()
+
 
 
 
