@@ -699,6 +699,94 @@ elif st.session_state.current_page == "Diagnóstico IA":
                 </div>
             </div>
             """, unsafe_allow_html=True)
+            
+        else:
+            st.markdown("""
+            <div class="cliente-card">
+                <div class="cliente-titulo">👋 BEM-VINDO</div>
+                <div class="cliente-texto" style="text-align:center;">
+                    Selecione um código de falha e execute a análise<br>
+                    para gerar uma orientação para seu cliente.
+                </div>
+                <div style="text-align:center; margin-top:20px;">
+                    <span style="font-size:48px;">🔧</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+                
+                st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            st.info("Execute um escaneamento primeiro na página Dashboard")
+    
+    with col2:
+        st.markdown("### 👤 ORIENTAÇÃO AO CLIENTE")
+        
+        if st.session_state.get('analysis_result'):
+            res = st.session_state.analysis_result
+            cor_urgencia = "#ff0000" if res['urgencia'] == 'ALTA' else "#ffaa00"
+            
+            st.markdown(f"""
+            <div class="cliente-card">
+                <div class="cliente-titulo">🔍 DIAGNÓSTICO SIMPLIFICADO</div>
+                
+                <div class="cliente-sub">⚠️ Problema Detectado:</div>
+                <div class="cliente-texto">{res['problema']}</div>
+                
+                <div class="cliente-sub">📝 Explicação:</div>
+                <div class="cliente-texto">{res['explicacao']}</div>
+                
+                <div class="cliente-sub">🔧 Causa Provável:</div>
+                <div class="cliente-texto">{res['causa']}</div>
+                
+                <div class="cliente-sub">✅ Solução:</div>
+                <div class="cliente-texto">{res['solucao']}</div>
+                
+                <div class="orcamento-box">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div class="orcamento-valor">R$ {res['valor']:.2f}</div>
+                            <div class="orcamento-detalhe">Tempo: {res['tempo']}</div>
+                        </div>
+                        <div style="color:{cor_urgencia}; font-weight:bold;">
+                            {res['urgencia']}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- BOTÕES HORIZONTAIS -->
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button style="flex: 1; background: #25D366; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" 
+                            onclick="alert('Contato enviado para oficina parceira!')">
+                        📱 WHATSAPP
+                    </button>
+                    <button style="flex: 1; background: #ff6600; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" 
+                            onclick="alert('Orçamento gerado com sucesso!')">
+                        💰 ORÇAMENTO
+                    </button>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button style="flex: 1; background: #0047ab; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" 
+                            onclick="alert('Agendamento realizado!')">
+                        📅 AGENDAR
+                    </button>
+                    <button style="flex: 1; background: #00ff00; color: black; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" 
+                            onclick="alert('Relatório enviado por e-mail!')">
+                        📧 ENVIAR
+                    </button>
+                </div>
+                
+                <div style="text-align: center; margin-top: 15px; color: #888; font-size: 11px;">
+                    Oficinas parceiras próximas:
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 5px; font-size: 11px; color: #00ffff; justify-content: center; flex-wrap: wrap;">
+                    <span>Auto Silva (3km)</span>
+                    <span>•</span>
+                    <span>Oficina do Zé (5km)</span>
+                    <span>•</span>
+                    <span>Mecânica Rápida (8km)</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
         else:
             st.markdown("""
             <div class="cliente-card">
@@ -987,5 +1075,6 @@ with col2:
 if st.session_state.connected:
     time.sleep(1)
     st.rerun()
+
 
 
