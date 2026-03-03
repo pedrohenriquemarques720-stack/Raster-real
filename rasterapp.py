@@ -579,126 +579,21 @@ if st.session_state.current_page == "Dashboard":
 elif st.session_state.current_page == "Diagnóstico IA":
     st.markdown("## 🤖 DIAGNÓSTICO INTELIGENTE")
     
-    # Layout em duas colunas para análise técnica e orientação
     col1, col2 = st.columns(2)
     
     with col1:
         st.markdown("### 📊 ANÁLISE TÉCNICA")
-        
         if st.session_state.dtcs:
-            dtc_options = [dtc['code'] for dtc in st.session_state.dtcs]
-            selected_dtc = st.selectbox("Selecione o código de falha", dtc_options)
-            
-            if st.button("🔮 ANALISAR COM IA", use_container_width=True):
-                with st.spinner("IA analisando dados em tempo real..."):
-                    time.sleep(2)
-                    explicacao = get_explicacao_cliente(selected_dtc)
-                    st.session_state.analysis_result = {
-                        'dtc': selected_dtc,
-                        'componentes': explicacao['componentes'],
-                        'probs': explicacao['probs'],
-                        'valor': explicacao['valor'],
-                        'tempo': explicacao['tempo'],
-                        'urgencia': explicacao['urgencia'],
-                        'problema': explicacao['problema'],
-                        'causa': explicacao['causa'],
-                        'solucao': explicacao['solucao'],
-                        'explicacao': explicacao['explicacao']
-                    }
-            
-            if st.session_state.get('analysis_result'):
-                res = st.session_state.analysis_result
-                
-                st.markdown('<div class="ia-card">', unsafe_allow_html=True)
-                st.markdown(f'<div class="ia-title">📊 ANÁLISE - {res["dtc"]}</div>', unsafe_allow_html=True)
-                
-                for i, comp in enumerate(res['componentes']):
-                    prob = res['probs'][i] if i < len(res['probs']) else 50
-                    st.markdown(f"""
-                    <div class="ia-prob">
-                        <div style="display:flex; justify-content:space-between;">
-                            <span style="color:white;">{comp}</span>
-                            <span style="color:#00ffff;">{prob}%</span>
-                        </div>
-                        <div class="prob-bar">
-                            <div class="prob-fill" style="width:{prob}%;"></div>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                st.markdown('</div>', unsafe_allow_html=True)
+            st.write("Códigos disponíveis:", [dtc['code'] for dtc in st.session_state.dtcs])
         else:
-            st.info("Execute um escaneamento primeiro na página Dashboard")
+            st.info("Execute um escaneamento primeiro")
     
     with col2:
         st.markdown("### 👤 ORIENTAÇÃO AO CLIENTE")
-        
         if st.session_state.get('analysis_result'):
-            res = st.session_state.analysis_result
-            cor_urgencia = "#ff0000" if res['urgencia'] == 'ALTA' else "#ffaa00"
-            
-            st.markdown(f"""
-            <div class="cliente-card">
-                <div class="cliente-titulo">🔍 DIAGNÓSTICO SIMPLIFICADO</div>
-                
-                <div class="cliente-sub">⚠️ Problema Detectado:</div>
-                <div class="cliente-texto">{res['problema']}</div>
-                
-                <div class="cliente-sub">📝 Explicação:</div>
-                <div class="cliente-texto">{res['explicacao']}</div>
-                
-                <div class="cliente-sub">🔧 Causa Provável:</div>
-                <div class="cliente-texto">{res['causa']}</div>
-                
-                <div class="cliente-sub">✅ Solução:</div>
-                <div class="cliente-texto">{res['solucao']}</div>
-                
-                <div class="orcamento-box">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <div class="orcamento-valor">R$ {res['valor']:.2f}</div>
-                            <div class="orcamento-detalhe">Tempo: {res['tempo']}</div>
-                        </div>
-                        <div style="color:{cor_urgencia}; font-weight:bold;">
-                            {res['urgencia']}
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- BOTÕES HORIZONTAIS -->
-                <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <button style="flex: 1; background: #25D366; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" 
-                            onclick="alert('Contato enviado para oficina parceira!')">
-                        📱 WHATSAPP
-                    </button>
-                    <button style="flex: 1; background: #ff6600; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" 
-                            onclick="alert('Orçamento gerado com sucesso!')">
-                        💰 ORÇAMENTO
-                    </button>
-                </div>
-                <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <button style="flex: 1; background: #0047ab; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" 
-                            onclick="alert('Agendamento realizado!')">
-                        📅 AGENDAR
-                    </button>
-                    <button style="flex: 1; background: #00ff00; color: black; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" 
-                            onclick="alert('Relatório enviado por e-mail!')">
-                        📧 ENVIAR
-                    </button>
-                </div>
-                
-                <div style="text-align: center; margin-top: 15px; color: #888; font-size: 11px;">
-                    Oficinas parceiras próximas:
-                </div>
-                <div style="display: flex; gap: 10px; margin-top: 5px; font-size: 11px; color: #00ffff; justify-content: center; flex-wrap: wrap;">
-                    <span>Auto Silva (3km)</span>
-                    <span>•</span>
-                    <span>Oficina do Zé (5km)</span>
-                    <span>•</span>
-                    <span>Mecânica Rápida (8km)</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.success("Análise disponível")
+        else:
+            st.info("Selecione um código de falha")
             
         else:
             st.markdown("""
@@ -1103,6 +998,7 @@ with col2:
 if st.session_state.connected:
     time.sleep(1)
     st.rerun()
+
 
 
 
