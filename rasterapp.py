@@ -1,4 +1,5 @@
 # app.py - Interface Completa com Controle Ativo do Motor, Conexão Real e PIDs Brasileiros
+# Nome: Rasther JPO
 
 import streamlit as st
 import pandas as pd
@@ -56,14 +57,14 @@ except ImportError as e:
 
 # Configuração da página
 st.set_page_config(
-    page_title="AUTEL PRO - Scanner Inteligente",
+    page_title="Rasther JPO - Scanner Inteligente",
     page_icon="🔧",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
 # =============================================
-# CSS - NOVA INTERFACE MODERNA COM CORREÇÕES 3D
+# CSS - NOVA INTERFACE MODERNA
 # =============================================
 st.markdown("""
 <style>
@@ -385,6 +386,83 @@ st.markdown("""
         transition: width 0.5s;
     }
     
+    /* Cards de Explicação para Cliente */
+    .explicacao-card {
+        background: linear-gradient(135deg, #1a2a33, #0f1a22);
+        padding: 20px;
+        border-radius: 12px;
+        margin: 15px 0;
+        border: 1px solid #00ffff;
+        box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+    }
+    
+    .explicacao-titulo {
+        color: #00ffff;
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 15px;
+        font-family: 'Roboto Mono', monospace;
+        border-bottom: 1px solid #00ffff;
+        padding-bottom: 8px;
+    }
+    
+    .explicacao-subtitulo {
+        color: #ffaa00;
+        font-size: 14px;
+        font-weight: bold;
+        margin: 15px 0 5px 0;
+    }
+    
+    .explicacao-texto {
+        color: #ddd;
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 15px;
+        background: #00000050;
+        padding: 12px;
+        border-radius: 8px;
+        border-left: 3px solid #00ffff;
+    }
+    
+    .explicacao-destaque {
+        color: #00ff00;
+        font-weight: bold;
+    }
+    
+    .explicacao-orcamento {
+        background: #004400;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 15px;
+        border: 1px solid #00ff00;
+    }
+    
+    .explicacao-valor {
+        font-size: 24px;
+        color: #00ff00;
+        font-weight: bold;
+        font-family: 'Roboto Mono', monospace;
+    }
+    
+    .botao-contato {
+        background: linear-gradient(135deg, #25D366, #128C7E);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 30px;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 10px;
+        width: 100%;
+        font-size: 14px;
+        transition: 0.3s;
+    }
+    
+    .botao-contato:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 20px #25D366;
+    }
+    
     /* Visualizador 3D - CORRIGIDO */
     .viewer-3d-fix {
         background: #111;
@@ -529,42 +607,6 @@ st.markdown("""
     .control-btn-3d:hover {
         background: #00ffff;
         color: black;
-    }
-    
-    /* Modo Cliente */
-    .cliente-card {
-        background: #1a1d24;
-        border-radius: 15px;
-        padding: 20px;
-        margin: 10px 0;
-        border: 1px solid #00ffff;
-    }
-    
-    .severidade-bar {
-        height: 30px;
-        border-radius: 15px;
-        background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
-        margin: 10px 0;
-        position: relative;
-    }
-    
-    .severidade-indicator {
-        height: 30px;
-        background: white;
-        border-radius: 15px;
-        width: 0%;
-        mix-blend-mode: overlay;
-        transition: width 0.5s;
-    }
-    
-    .assinatura-area {
-        border: 2px dashed #00ffff;
-        border-radius: 10px;
-        height: 120px;
-        margin: 10px 0;
-        cursor: crosshair;
-        background: #000;
-        position: relative;
     }
     
     /* Estatísticas */
@@ -781,7 +823,6 @@ if 'scanner' not in st.session_state:
     st.session_state.log = ["> Sistema pronto"]
     st.session_state.diagnosis_result = None
     st.session_state.selected_component = None
-    st.session_state.modo_cliente = False
     st.session_state.assinatura = False
     st.session_state.orcamento_atual = None
     st.session_state.tuning_results = None
@@ -797,7 +838,7 @@ st.markdown(f"""
     <div class="logo-neon">
         <div class="logo-icon">🔧</div>
         <div class="logo-text">
-            <h1>AUTEL PRO</h1>
+            <h1>RASTHER JPO</h1>
             <p>SCANNER INTELIGENTE</p>
         </div>
     </div>
@@ -925,7 +966,7 @@ if st.session_state.connected and not st.session_state.sgw_unlocked:
 # =============================================
 st.markdown('<div class="nav-menu-buttons">', unsafe_allow_html=True)
 
-col1, col2, col3, col4, col5, col6 = st.columns(6)
+col1, col2, col3, col4, col5 = st.columns(5)
 
 with col1:
     if st.button("📊 DASHBOARD", key="nav_dash"):
@@ -943,16 +984,11 @@ with col3:
         st.rerun()
 
 with col4:
-    if st.button("👤 MODO CLIENTE", key="nav_cliente"):
-        st.session_state.current_page = "Modo Cliente"
-        st.rerun()
-
-with col5:
     if st.button("🤖 DIAGNÓSTICO IA", key="nav_ia"):
         st.session_state.current_page = "Diagnóstico IA"
         st.rerun()
 
-with col6:
+with col5:
     if st.button("💰 ORÇAMENTOS", key="nav_orc"):
         st.session_state.current_page = "Orçamentos"
         st.rerun()
@@ -1023,6 +1059,60 @@ if st.session_state.connected:
     
     if len(st.session_state.live_history) > 50:
         st.session_state.live_history.pop(0)
+
+# =============================================
+# FUNÇÕES AUXILIARES PARA EXPLICAÇÃO
+# =============================================
+
+def get_explicacao_cliente(dtc_code):
+    """Retorna explicação em linguagem simples para o cliente"""
+    explicacoes = {
+        'P0301': {
+            'problema': 'Falha de ignição no cilindro 1',
+            'explicacao': 'O motor do seu veículo está com problema na queima de combustível no primeiro cilindro. Isso causa perda de potência, aumento no consumo e pode danificar o catalisador se não for corrigido.',
+            'causa': 'Velas de ignição desgastadas, bobina com defeito ou bicos injetores sujos.',
+            'solucao': 'Substituir a bobina de ignição e as velas do cilindro 1. Recomenda-se verificar também os outros cilindros.',
+            'urgencia': 'ALTA',
+            'valor_estimado': 450.00,
+            'tempo_estimado': '1.5 horas'
+        },
+        'P0420': {
+            'problema': 'Catalisador ineficiente',
+            'explicacao': 'O sistema de filtragem de poluição (catalisador) não está funcionando corretamente, permitindo a passagem de gases poluentes acima do permitido.',
+            'causa': 'Catalisador entupido ou danificado, ou sonda lambda com defeito.',
+            'solucao': 'Substituir o catalisador e verificar as sondas lambda.',
+            'urgencia': 'MÉDIA',
+            'valor_estimado': 1850.00,
+            'tempo_estimado': '3 horas'
+        },
+        'P0171': {
+            'problema': 'Mistura pobre de combustível',
+            'explicacao': 'O motor está recebendo ar demais ou combustível de menos, causando marcha lenta irregular e perda de desempenho.',
+            'causa': 'Vazamento de vácuo, sensor MAF sujo, ou pressão de combustível baixa.',
+            'solucao': 'Limpar sensor MAF, verificar mangueiras de vácuo e testar pressão de combustível.',
+            'urgencia': 'MÉDIA',
+            'valor_estimado': 380.00,
+            'tempo_estimado': '1 hora'
+        },
+        'P0335': {
+            'problema': 'Sensor de rotação com defeito',
+            'explicacao': 'O sensor que informa a rotação do motor para o computador de bordo está com problema, podendo causar falha na partida ou motor funcionando irregular.',
+            'causa': 'Sensor CKP com defeito ou problemas na fiação.',
+            'solucao': 'Substituir sensor de rotação e verificar conector.',
+            'urgencia': 'ALTA',
+            'valor_estimado': 290.00,
+            'tempo_estimado': '1 hora'
+        }
+    }
+    return explicacoes.get(dtc_code, {
+        'problema': 'Falha detectada no sistema',
+        'explicacao': 'O scanner detectou uma anomalia no veículo que requer diagnóstico mais aprofundado.',
+        'causa': 'Pode ser causado por sensor com defeito, problema elétrico ou desgaste de componentes.',
+        'solucao': 'Realizar diagnóstico detalhado com equipamento especializado.',
+        'urgencia': 'MÉDIA',
+        'valor_estimado': 150.00,
+        'tempo_estimado': '0.5 horas'
+    })
 
 # =============================================
 # CONTEÚDO BASEADO NA PÁGINA SELECIONADA
@@ -1675,79 +1765,128 @@ elif st.session_state.current_page == "Visualizador 3D":
             """, unsafe_allow_html=True)
 
 # =============================================
-# MODO CLIENTE
-# =============================================
-elif st.session_state.current_page == "Modo Cliente":
-    st.markdown("## 👤 MODO CLIENTE - INFORMAÇÕES SIMPLIFICADAS")
-    
-    if not st.session_state.dtcs:
-        st.warning("Nenhum diagnóstico disponível. Execute um escaneamento primeiro.")
-    else:
-        col1, col2 = st.columns([1.5, 1])
-        
-        with col1:
-            st.markdown("### 🚗 RESUMO DO DIAGNÓSTICO")
-            
-            severidade_max = 0
-            
-            for dtc in st.session_state.dtcs:
-                if dtc['code'] == 'P0301':
-                    titulo = "🔥 Problema na Queima de Combustível"
-                    desc = "O motor está tendo dificuldade para queimar o combustível no cilindro 1"
-                    severidade = 0.8
-                elif dtc['code'] == 'P0420':
-                    titulo = "🌫️ Sistema de Filtragem de Poluição Comprometido"
-                    desc = "O catalisador não está filtrando os gases corretamente"
-                    severidade = 0.6
-                else:
-                    titulo = f"⚠️ Problema no Sistema {dtc['system']}"
-                    desc = dtc['desc']
-                    severidade = 0.5
-                
-                severidade_max = max(severidade_max, severidade)
-                
-                st.markdown(f"""
-                <div class="cliente-card">
-                    <h4 style="color:#ff0000;">{titulo}</h4>
-                    <p style="color:#ccc;">{desc}</p>
-                </div>
-                """, unsafe_allow_html=True)
-        
-        with col2:
-            st.markdown("### 📝 AUTORIZAÇÃO DE REPARO")
-            
-            if st.button("✍️ ASSINAR E AUTORIZAR", use_container_width=True):
-                st.session_state.assinatura = True
-                st.success("✅ Autorização registrada com sucesso!")
-
-# =============================================
-# DIAGNÓSTICO IA
+# DIAGNÓSTICO IA - COM EXPLICAÇÃO PARA CLIENTE
 # =============================================
 elif st.session_state.current_page == "Diagnóstico IA":
     st.markdown("## 🤖 DIAGNÓSTICO AVANÇADO COM IA")
     
-    if st.session_state.dtcs:
-        dtc_options = [dtc['code'] for dtc in st.session_state.dtcs]
-        selected_dtc = st.selectbox("Selecione o DTC para análise", dtc_options)
-        
-        if st.button("🔮 EXECUTAR ANÁLISE", use_container_width=True):
-            with st.spinner("IA analisando dados..."):
-                time.sleep(2)
-                live_data_for_ia = {
-                    'short_term_fuel_trim': st.session_state.live_data.get('short_term_fuel_trim', 0),
-                    'long_term_fuel_trim': st.session_state.live_data.get('long_term_fuel_trim', 0),
-                    'o2_voltage': st.session_state.live_data.get('o2', 0),
-                    'maf': st.session_state.live_data.get('maf', 0),
-                    'rpm': st.session_state.live_data.get('rpm', 0)
-                }
+    col1, col2 = st.columns([1, 1])
+    
+    with col1:
+        if st.session_state.dtcs:
+            dtc_options = [dtc['code'] for dtc in st.session_state.dtcs]
+            selected_dtc = st.selectbox("Selecione o DTC para análise", dtc_options)
+            
+            if st.button("🔮 EXECUTAR ANÁLISE", use_container_width=True):
+                with st.spinner("IA analisando dados em tempo real..."):
+                    time.sleep(2)
+                    live_data_for_ia = {
+                        'short_term_fuel_trim': st.session_state.live_data.get('short_term_fuel_trim', 0),
+                        'long_term_fuel_trim': st.session_state.live_data.get('long_term_fuel_trim', 0),
+                        'o2_voltage': st.session_state.live_data.get('o2', 0),
+                        'maf': st.session_state.live_data.get('maf', 0),
+                        'rpm': st.session_state.live_data.get('rpm', 0)
+                    }
+                    
+                    resultado = st.session_state.copiloto.diagnose(
+                        selected_dtc,
+                        live_data_for_ia,
+                        st.session_state.live_history[-20:] if st.session_state.live_history else [],
+                        st.session_state.vehicle_info
+                    )
+                    st.session_state.diagnosis_result = resultado
+            
+            # Resultado técnico
+            if st.session_state.diagnosis_result:
+                res = st.session_state.diagnosis_result
+                st.markdown('<div class="copilot-card-modern">', unsafe_allow_html=True)
+                st.markdown(f'<div class="copilot-title-modern">📊 ANÁLISE TÉCNICA - {res["dtc"]}</div>', unsafe_allow_html=True)
                 
-                resultado = st.session_state.copiloto.diagnose(
-                    selected_dtc,
-                    live_data_for_ia,
-                    st.session_state.live_history[-20:] if st.session_state.live_history else [],
-                    st.session_state.vehicle_info
-                )
-                st.session_state.diagnosis_result = resultado
+                for p in res['probabilities'][:3]:
+                    prob = p['probability']
+                    cor = "#00ff00" if prob > 70 else "#ffff00" if prob > 40 else "#ff0000"
+                    
+                    st.markdown(f"""
+                    <div style="margin:10px 0;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+                            <span style="font-size:12px;">{p['component']}</span>
+                            <span style="color:{cor}; font-weight:bold; font-size:12px;">{prob}%</span>
+                        </div>
+                        <div class="probability-bar">
+                            <div class="probability-fill" style="width:{prob}%;"></div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            st.info("Execute um escaneamento primeiro na página Dashboard")
+    
+    with col2:
+        # Explicação para o cliente (sempre visível)
+        st.markdown("### 👤 O QUE DIZER AO CLIENTE")
+        
+        if st.session_state.diagnosis_result and st.session_state.dtcs:
+            dtc_atual = st.session_state.diagnosis_result.get('dtc', st.session_state.dtcs[0]['code'])
+            explicacao = get_explicacao_cliente(dtc_atual)
+            
+            st.markdown(f"""
+            <div class="explicacao-card">
+                <div class="explicacao-titulo">🔍 DIAGNÓSTICO SIMPLIFICADO</div>
+                
+                <div class="explicacao-subtitulo">⚠️ Problema Detectado:</div>
+                <div class="explicacao-texto">{explicacao['problema']}</div>
+                
+                <div class="explicacao-subtitulo">📝 Explicação para o Cliente:</div>
+                <div class="explicacao-texto">{explicacao['explicacao']}</div>
+                
+                <div class="explicacao-subtitulo">🔧 Possível Causa:</div>
+                <div class="explicacao-texto">{explicacao['causa']}</div>
+                
+                <div class="explicacao-subtitulo">✅ Solução Recomendada:</div>
+                <div class="explicacao-texto">{explicacao['solucao']}</div>
+                
+                <div class="explicacao-orcamento">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="color: #888;">Valor estimado</div>
+                            <div class="explicacao-valor">R$ {explicacao['valor_estimado']:.2f}</div>
+                            <div style="color: #888; font-size: 12px;">Tempo: {explicacao['tempo_estimado']}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="color: {'#ff0000' if explicacao['urgencia'] == 'ALTA' else '#ffaa00'}; font-weight: bold;">
+                                Urgência: {explicacao['urgencia']}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="botao-contato" onclick="alert('Contato enviado para a oficina parceira mais próxima!')">
+                    📱 ENCAMINHAR PARA OFICINA PARCEIRA
+                </button>
+                <div style="text-align: center; margin-top: 10px; color: #888; font-size: 11px;">
+                    Oficinas parceiras: Auto Mecânica Silva (3km) • Oficina do Zé (5km) • Mecânica Rápida (8km)
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        else:
+            st.markdown("""
+            <div class="explicacao-card">
+                <div class="explicacao-titulo">👋 BEM-VINDO, MECÂNICO!</div>
+                <div class="explicacao-texto" style="text-align: center;">
+                    Selecione um DTC na coluna ao lado e execute a análise<br>
+                    para gerar uma explicação simplificada para o seu cliente.
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <span style="font-size: 48px;">🔧</span>
+                </div>
+                <div style="color: #888; text-align: center; margin-top: 10px;">
+                    Com este recurso, você pode explicar<br>
+                    problemas complexos de forma simples
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
 # =============================================
 # ORÇAMENTOS
