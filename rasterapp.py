@@ -63,7 +63,7 @@ st.set_page_config(
 )
 
 # =============================================
-# CSS - NOVA INTERFACE MODERNA
+# CSS - NOVA INTERFACE MODERNA COM CORREÇÕES 3D
 # =============================================
 st.markdown("""
 <style>
@@ -385,23 +385,133 @@ st.markdown("""
         transition: width 0.5s;
     }
     
-    /* Visualizador 3D */
-    .viewer-3d {
+    /* Visualizador 3D - CORRIGIDO */
+    .viewer-3d-fix {
         background: #111;
         border-radius: 10px;
-        padding: 20px;
         border: 1px solid #00ffff;
-        height: 450px;
+        padding: 15px;
+        height: 500px;
         position: relative;
         overflow: hidden;
+        margin-bottom: 10px;
     }
     
-    .engine-3d {
+    .engine-3d-fix {
+        position: relative;
         width: 100%;
         height: 100%;
-        background: #222;
+        background: linear-gradient(135deg, #222, #111);
         border-radius: 8px;
-        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .engine-svg {
+        width: 100%;
+        height: 100%;
+        max-height: 460px;
+    }
+    
+    .info-panel {
+        background: #1a1d24;
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid #00ffff;
+        height: 500px;
+        overflow-y: auto;
+    }
+    
+    .info-title {
+        color: #00ffff;
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 15px;
+        padding-bottom: 5px;
+        border-bottom: 1px solid #00ffff;
+    }
+    
+    .info-section {
+        margin-bottom: 20px;
+    }
+    
+    .info-label {
+        color: #888;
+        font-size: 11px;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+    
+    .info-content {
+        background: #000;
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 12px;
+        color: white;
+        border: 1px solid #333;
+    }
+    
+    .pin-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+        gap: 8px;
+        margin-top: 10px;
+    }
+    
+    .pin-item {
+        background: #000;
+        padding: 10px;
+        border-radius: 5px;
+        text-align: center;
+        border: 1px solid #00ffff;
+    }
+    
+    .pin-number {
+        color: #00ffff;
+        font-size: 14px;
+        font-weight: bold;
+    }
+    
+    .pin-function {
+        font-size: 10px;
+        color: white;
+    }
+    
+    .pin-wire {
+        font-size: 8px;
+        color: #888;
+    }
+    
+    .no-component {
+        background: #1a1d24;
+        padding: 30px;
+        border-radius: 10px;
+        text-align: center;
+        border: 1px solid #00ffff;
+        height: 500px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .no-component-icon {
+        color: #888;
+        font-size: 48px;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+    
+    .no-component-title {
+        color: #00ffff;
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+    
+    .no-component-text {
+        color: #888;
+        font-size: 12px;
     }
     
     .control-btn-3d {
@@ -1377,7 +1487,7 @@ elif st.session_state.current_page == "Controle Ativo":
                 st.code(f"[{log['timestamp']}] {log['level']}: {log['message']}")
 
 # =============================================
-# VISUALIZADOR 3D
+# VISUALIZADOR 3D - CORRIGIDO
 # =============================================
 elif st.session_state.current_page == "Visualizador 3D":
     st.markdown("## 🔍 VISUALIZADOR 3D DE COMPONENTES")
@@ -1385,84 +1495,184 @@ elif st.session_state.current_page == "Visualizador 3D":
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        st.markdown('<div class="viewer-3d">', unsafe_allow_html=True)
+        # Container do visualizador 3D com altura fixa
+        st.markdown('<div class="viewer-3d-fix">', unsafe_allow_html=True)
+        st.markdown('<div class="engine-3d-fix">', unsafe_allow_html=True)
         
+        # SVG do motor
         st.markdown("""
-        <div class="engine-3d" style="position: relative; height: 400px; background: linear-gradient(135deg, #222, #111); border-radius: 8px; padding: 20px;">
-            <svg width="100%" height="100%" viewBox="0 0 800 400" style="background: transparent;">
-                <rect x="200" y="100" width="400" height="200" fill="#444" stroke="#00ffff" stroke-width="2" rx="10"/>
-                <rect x="250" y="50" width="300" height="50" fill="#555" stroke="#888" stroke-width="1" rx="5"/>
-                <rect x="280" y="130" width="50" height="80" fill="#666" stroke="#ffff00" stroke-width="3" rx="3"/>
-                <text x="295" y="175" fill="#ffff00" font-size="12" font-family="Roboto Mono">C1</text>
-                <rect x="360" y="130" width="50" height="80" fill="#666" stroke="#888" stroke-width="1" rx="3"/>
-                <text x="375" y="175" fill="white" font-size="12">C2</text>
-                <rect x="440" y="130" width="50" height="80" fill="#666" stroke="#888" stroke-width="1" rx="3"/>
-                <text x="455" y="175" fill="white" font-size="12">C3</text>
-                <rect x="520" y="130" width="50" height="80" fill="#666" stroke="#888" stroke-width="1" rx="3"/>
-                <text x="535" y="175" fill="white" font-size="12">C4</text>
-                <circle cx="305" cy="70" r="15" fill="#ffaa00" stroke="#ffff00" stroke-width="3"/>
-                <text x="298" y="75" fill="black" font-size="10" font-family="Roboto Mono">BOB</text>
-                <line x1="305" y1="70" x2="250" y2="30" stroke="#ffff00" stroke-width="2" stroke-dasharray="5,3"/>
-                <text x="200" y="20" fill="#ffff00" font-size="12" font-family="Roboto Mono">Componente afetado</text>
-            </svg>
-        </div>
+        <svg class="engine-svg" viewBox="0 0 800 500" preserveAspectRatio="xMidYMid meet">
+            <!-- Bloco do motor -->
+            <rect x="200" y="150" width="400" height="200" fill="#444" stroke="#00ffff" stroke-width="2" rx="10"/>
+            
+            <!-- Tampa do motor -->
+            <rect x="250" y="100" width="300" height="50" fill="#555" stroke="#888" stroke-width="1" rx="5"/>
+            
+            <!-- Cilindros -->
+            <rect x="280" y="180" width="50" height="120" fill="#666" stroke="#888" stroke-width="1" rx="3"/>
+            <text x="295" y="250" fill="white" font-size="12" font-family="Roboto Mono">C1</text>
+            
+            <rect x="360" y="180" width="50" height="120" fill="#666" stroke="#888" stroke-width="1" rx="3"/>
+            <text x="375" y="250" fill="white" font-size="12">C2</text>
+            
+            <rect x="440" y="180" width="50" height="120" fill="#666" stroke="#888" stroke-width="1" rx="3"/>
+            <text x="455" y="250" fill="white" font-size="12">C3</text>
+            
+            <rect x="520" y="180" width="50" height="120" fill="#666" stroke="#888" stroke-width="1" rx="3"/>
+            <text x="535" y="250" fill="white" font-size="12">C4</text>
+            
+            <!-- Componente destacado (se houver) -->
+            <circle cx="305" cy="120" r="20" fill="#ffaa00" stroke="#ffff00" stroke-width="3" filter="url(#glow)"/>
+            <text x="295" y="125" fill="black" font-size="10" font-family="Roboto Mono" text-anchor="middle">BOB</text>
+            
+            <!-- Seta indicadora -->
+            <line x1="305" y1="120" x2="250" y2="80" stroke="#ffff00" stroke-width="2" stroke-dasharray="5,3"/>
+            <text x="200" y="70" fill="#ffff00" font-size="12" font-family="Roboto Mono">Componente afetado</text>
+            
+            <!-- Efeito de brilho -->
+            <defs>
+                <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+                    <feMerge>
+                        <feMergeNode in="offsetblur" />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                </filter>
+            </defs>
+        </svg>
         """, unsafe_allow_html=True)
         
+        st.markdown('</div></div>', unsafe_allow_html=True)
+        
+        # Botões de controle 3D
         col_a, col_b, col_c, col_d = st.columns(4)
         with col_a:
             if st.button("🔄 ROTACIONAR", key="rotate_3d", use_container_width=True):
                 st.session_state.log.append("> Rotacionando modelo 3D")
         with col_b:
             if st.button("🔍 ZOOM IN", key="zoom_in", use_container_width=True):
-                pass
+                st.session_state.log.append("> Zoom in")
         with col_c:
             if st.button("🔎 ZOOM OUT", key="zoom_out", use_container_width=True):
-                pass
+                st.session_state.log.append("> Zoom out")
         with col_d:
             if st.button("🎯 CENTRALIZAR", key="center", use_container_width=True):
-                pass
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+                st.session_state.log.append("> Centralizando visualização")
     
     with col2:
-        st.markdown("### 📋 INFORMAÇÕES DO COMPONENTE")
-        
         if st.session_state.selected_component:
             comp = st.session_state.selected_component
             
-            st.markdown(f"""
-            <div class="cliente-card">
-                <h4 style="color:#00ffff; margin-bottom:15px;">{comp}</h4>
+            # Dicionário de informações por componente
+            comp_info = {
+                'COIL': {
+                    'nome': 'Bobina de Ignição',
+                    'localizacao': 'Cabeçote do motor, sobre as velas de ignição',
+                    'pinagem': [
+                        {'pino': '1', 'funcao': '12V', 'cor': 'Vermelho'},
+                        {'pino': '2', 'funcao': 'GND', 'cor': 'Preto'},
+                        {'pino': '3', 'funcao': 'Sinal', 'cor': 'Verde'}
+                    ]
+                },
+                'SPARK_PLUG': {
+                    'nome': 'Vela de Ignição',
+                    'localizacao': 'Cabeçote, dentro dos cilindros',
+                    'pinagem': [
+                        {'pino': '1', 'funcao': 'Alta tensão', 'cor': '---'}
+                    ]
+                },
+                'INJECTOR': {
+                    'nome': 'Injetor de Combustível',
+                    'localizacao': 'Trilho de combustível, próximo aos cilindros',
+                    'pinagem': [
+                        {'pino': '1', 'funcao': '12V', 'cor': 'Azul'},
+                        {'pino': '2', 'funcao': 'Sinal', 'cor': 'Marrom'}
+                    ]
+                },
+                'O2_SENSOR': {
+                    'nome': 'Sonda Lambda',
+                    'localizacao': 'Sistema de escapamento, antes do catalisador',
+                    'pinagem': [
+                        {'pino': '1', 'funcao': 'Sinal', 'cor': 'Preto'},
+                        {'pino': '2', 'funcao': 'GND', 'cor': 'Cinza'},
+                        {'pino': '3', 'funcao': '12V', 'cor': 'Vermelho'},
+                        {'pino': '4', 'funcao': 'GND', 'cor': 'Marrom'}
+                    ]
+                },
+                'MAF_SENSOR': {
+                    'nome': 'Sensor MAF',
+                    'localizacao': 'Duto de ar, após o filtro de ar',
+                    'pinagem': [
+                        {'pino': '1', 'funcao': '5V', 'cor': 'Vermelho'},
+                        {'pino': '2', 'funcao': 'Sinal', 'cor': 'Amarelo'},
+                        {'pino': '3', 'funcao': 'GND', 'cor': 'Preto'}
+                    ]
+                },
+                'CKP_SENSOR': {
+                    'nome': 'Sensor de Rotação',
+                    'localizacao': 'Bloco do motor, próximo ao volante do motor',
+                    'pinagem': [
+                        {'pino': '1', 'funcao': 'Sinal +', 'cor': 'Branco'},
+                        {'pino': '2', 'funcao': 'Sinal -', 'cor': 'Cinza'},
+                        {'pino': '3', 'funcao': 'Shield', 'cor': 'Transparente'}
+                    ]
+                },
+                'CATALYST': {
+                    'nome': 'Catalisador',
+                    'localizacao': 'Sistema de escapamento, sob o veículo',
+                    'pinagem': [
+                        {'pino': 'N/A', 'funcao': 'Componente mecânico', 'cor': '---'}
+                    ]
+                }
+            }
+            
+            info = comp_info.get(comp, {
+                'nome': comp,
+                'localizacao': 'Localização não disponível',
+                'pinagem': []
+            })
+            
+            # Exibe informações do componente
+            st.markdown('<div class="info-panel">', unsafe_allow_html=True)
+            st.markdown(f'<div class="info-title">{info["nome"]}</div>', unsafe_allow_html=True)
+            
+            st.markdown('<div class="info-section">', unsafe_allow_html=True)
+            st.markdown('<div class="info-label">📍 LOCALIZAÇÃO</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="info-content">{info["localizacao"]}</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            if info['pinagem']:
+                st.markdown('<div class="info-section">', unsafe_allow_html=True)
+                st.markdown('<div class="info-label">🔌 PINAGEM</div>', unsafe_allow_html=True)
+                st.markdown('<div class="pin-grid">', unsafe_allow_html=True)
                 
-                <div style="margin-bottom:15px;">
-                    <div style="color:#888; font-size:11px; margin-bottom:5px;">📍 LOCALIZAÇÃO</div>
-                    <div style="font-size:12px;">Cabeçote do motor, lado direito, próximo à válvula borboleta</div>
-                </div>
-                
-                <div style="margin-bottom:15px;">
-                    <div style="color:#888; font-size:11px; margin-bottom:5px;">🔌 PINAGEM</div>
-                    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:5px;">
-                        <div style="background:#000; padding:8px; border-radius:5px; text-align:center;">
-                            <div style="color:#00ffff;">1</div>
-                            <div style="font-size:10px;">12V</div>
-                            <div style="color:#888; font-size:8px;">Vermelho</div>
-                        </div>
-                        <div style="background:#000; padding:8px; border-radius:5px; text-align:center;">
-                            <div style="color:#00ffff;">2</div>
-                            <div style="font-size:10px;">GND</div>
-                            <div style="color:#888; font-size:8px;">Preto</div>
-                        </div>
-                        <div style="background:#000; padding:8px; border-radius:5px; text-align:center;">
-                            <div style="color:#00ffff;">3</div>
-                            <div style="font-size:10px;">Sinal</div>
-                            <div style="color:#888; font-size:8px;">Verde</div>
-                        </div>
+                for pino in info['pinagem']:
+                    st.markdown(f"""
+                    <div class="pin-item">
+                        <div class="pin-number">{pino['pino']}</div>
+                        <div class="pin-function">{pino['funcao']}</div>
+                        <div class="pin-wire">{pino['cor']}</div>
                     </div>
+                    """, unsafe_allow_html=True)
+                
+                st.markdown('</div></div>', unsafe_allow_html=True)
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+        else:
+            # Mensagem quando nenhum componente está selecionado
+            st.markdown("""
+            <div class="no-component">
+                <div class="no-component-icon">
+                    <i class="fas fa-cube"></i>
+                </div>
+                <div class="no-component-title">NENHUM COMPONENTE SELECIONADO</div>
+                <div class="no-component-text">
+                    Execute um diagnóstico na página "Controle Ativo"<br>
+                    ou "Diagnóstico IA" para visualizar componentes
                 </div>
             </div>
             """, unsafe_allow_html=True)
-        else:
-            st.info("Selecione um componente no diagnóstico para visualização 3D")
 
 # =============================================
 # MODO CLIENTE
