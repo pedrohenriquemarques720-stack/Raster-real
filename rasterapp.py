@@ -328,7 +328,6 @@ st.markdown("""
 # =============================================
 # FUNÇÕES AUXILIARES
 # =============================================
-
 def get_explicacao_cliente(dtc_code):
     """Retorna explicação em linguagem simples para o cliente"""
     explicacoes = {
@@ -456,13 +455,14 @@ with col2:
 # =============================================
 pages = ["Dashboard", "Diagnóstico IA", "Controle Ativo", "Visualizador 3D", "Relatórios"]
 
-st.markdown('<div class="nav-menu">', unsafe_allow_html=True)
-for page in pages:
-    active_class = "active" if st.session_state.current_page == page else ""
-    if st.button(page, key=f"nav_{page}"):
-        st.session_state.current_page = page
-        st.rerun()
-st.markdown('</div>', unsafe_allow_html=True)
+cols = st.columns(len(pages))
+for i, page in enumerate(pages):
+    with cols[i]:
+        if st.button(page, key=f"nav_{page}"):
+            st.session_state.current_page = page
+            st.rerun()
+
+st.markdown("<br>", unsafe_allow_html=True)
 
 # =============================================
 # ATUALIZA DADOS SIMULADOS (se conectado)
@@ -481,13 +481,11 @@ if st.session_state.connected:
     }
 
 # =============================================
-# CONTEÚDO DAS PÁGINAS
+# DASHBOARD
 # =============================================
-
 if st.session_state.current_page == "Dashboard":
     st.markdown("## 📊 PAINEL PRINCIPAL")
     
-    # Métricas principais
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
@@ -522,7 +520,6 @@ if st.session_state.current_page == "Dashboard":
         </div>
         """, unsafe_allow_html=True)
     
-    # Informações do veículo
     st.markdown("### 🚗 INFORMAÇÕES DO VEÍCULO")
     
     col1, col2 = st.columns(2)
@@ -543,7 +540,6 @@ if st.session_state.current_page == "Dashboard":
         <div class="info-row"><span class="info-label">KM:</span> <span class="info-value">{st.session_state.vehicle_info['km']}</span></div>
         """, unsafe_allow_html=True)
     
-    # Códigos de falha
     st.markdown("### ⚠️ CÓDIGOS DE FALHA")
     
     col_btn1, col_btn2 = st.columns(2)
@@ -562,6 +558,7 @@ if st.session_state.current_page == "Dashboard":
         if st.button("✅ LIMPAR FALHAS", use_container_width=True):
             st.session_state.dtcs = []
             st.session_state.diagnosis_result = None
+            st.session_state.analysis_result = None
             st.session_state.log.append("✅ Falhas limpas")
     
     if st.session_state.dtcs:
@@ -576,6 +573,9 @@ if st.session_state.current_page == "Dashboard":
     else:
         st.info("Nenhum código de falha encontrado")
 
+# =============================================
+# DIAGNÓSTICO IA
+# =============================================
 elif st.session_state.current_page == "Diagnóstico IA":
     st.markdown("## 🤖 DIAGNÓSTICO INTELIGENTE")
     
@@ -583,59 +583,47 @@ elif st.session_state.current_page == "Diagnóstico IA":
     
     with col1:
         st.markdown("### 📊 ANÁLISE TÉCNICA")
+        
         if st.session_state.dtcs:
-            st.write("Códigos disponíveis:", [dtc['code'] for dtc in st.session_state.dtcs])
-        else:
-            st.info("Execute um escaneamento primeiro")
-    
-    with col2:
-        st.markdown("### 👤 ORIENTAÇÃO AO CLIENTE")
-        if st.session_state.get('analysis_result'):
-            st.success("Análise disponível")
-        else:
-            st.info("Selecione um código de falha")
+            dtc_options = [dtc['code'] for dtc in st.session_state.dtcs]
+            selected_dtc = st.selectbox("Selecione o código de falha", dtc_options)
             
-        else:
-            st.markdown("""
-            <div class="cliente-card">
-                <div class="cliente-titulo">👋 BEM-VINDO</div>
-                <div class="cliente-texto" style="text-align:center;">
-                    Selecione um código de falha e execute a análise<br>
-                    para gerar uma orientação para seu cliente.
-                </div>
-                <div style="text-align:center; margin-top:20px;">
-                    <span style="font-size:48px;">🔧</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            if st.button("🔮 ANALISAR COM IA", use_container_width=True):
+                with st.spinner("IA analisando dados em tempo real..."):
+                    time.sleep(2)
+                    explicacao = get_explicacao_cliente(selected_dtc)
+                    st.session_state.analysis_result = {
+                        'dtc': selected_dtc,
+                        'componentes': explicacao['componentes'],
+                        'probs': explicacao['probs'],
+                        'valor': explicacao['valor'],
+                        'tempo': explicacao['tempo'],
+                        'urgencia': explicacao['urgencia'],
+                        'problema': explicacao['problema'],
+                        'causa': explicacao['causa'],
+                        'solucao': explicacao['solucao'],
+                        'explicacao': explicacao['explicacao']
+                    }
             
-        else:
-            st.markdown("""
-            <div class="cliente-card">
-                <div class="cliente-titulo">👋 BEM-VINDO</div>
-                <div class="cliente-texto" style="text-align:center;">
-                    Selecione um código de falha e execute a análise<br>
-                    para gerar uma orientação para seu cliente.
-                </div>
-                <div style="text-align:center; margin-top:20px;">
-                    <span style="font-size:48px;">🔧</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-        else:
-            st.markdown("""
-            <div class="cliente-card">
-                <div class="cliente-titulo">👋 BEM-VINDO</div>
-                <div class="cliente-texto" style="text-align:center;">
-                    Selecione um código de falha e execute a análise<br>
-                    para gerar uma orientação para seu cliente.
-                </div>
-                <div style="text-align:center; margin-top:20px;">
-                    <span style="font-size:48px;">🔧</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            if st.session_state.get('analysis_result'):
+                res = st.session_state.analysis_result
+                
+                st.markdown('<div class="ia-card">', unsafe_allow_html=True)
+                st.markdown(f'<div class="ia-title">📊 ANÁLISE - {res["dtc"]}</div>', unsafe_allow_html=True)
+                
+                for i, comp in enumerate(res['componentes']):
+                    prob = res['probs'][i] if i < len(res['probs']) else 50
+                    st.markdown(f"""
+                    <div class="ia-prob">
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="color:white;">{comp}</span>
+                            <span style="color:#00ffff;">{prob}%</span>
+                        </div>
+                        <div class="prob-bar">
+                            <div class="prob-fill" style="width:{prob}%;"></div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
                 
                 st.markdown('</div>', unsafe_allow_html=True)
         else:
@@ -676,183 +664,19 @@ elif st.session_state.current_page == "Diagnóstico IA":
                     </div>
                 </div>
                 
-                <!-- BOTÕES HORIZONTAIS -->
                 <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <button style="flex: 1; background: #25D366; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" 
-                            onclick="alert('Contato enviado para oficina parceira!')">
-                        📱 WHATSAPP
-                    </button>
-                    <button style="flex: 1; background: #ff6600; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" 
-                            onclick="alert('Orçamento gerado com sucesso!')">
-                        💰 ORÇAMENTO
-                    </button>
+                    <button style="flex: 1; background: #25D366; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="alert('Contato enviado para oficina parceira!')">📱 WHATSAPP</button>
+                    <button style="flex: 1; background: #ff6600; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="alert('Orçamento gerado com sucesso!')">💰 ORÇAMENTO</button>
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <button style="flex: 1; background: #0047ab; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" 
-                            onclick="alert('Agendamento realizado!')">
-                        📅 AGENDAR
-                    </button>
-                    <button style="flex: 1; background: #00ff00; color: black; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" 
-                            onclick="alert('Relatório enviado por e-mail!')">
-                        📧 ENVIAR
-                    </button>
+                    <button style="flex: 1; background: #0047ab; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="alert('Agendamento realizado!')">📅 AGENDAR</button>
+                    <button style="flex: 1; background: #00ff00; color: black; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="alert('Relatório enviado por e-mail!')">📧 ENVIAR</button>
                 </div>
                 
-                <div style="text-align: center; margin-top: 15px; color: #888; font-size: 11px;">
-                    Oficinas parceiras próximas:
-                </div>
+                <div style="text-align: center; margin-top: 15px; color: #888; font-size: 11px;">Oficinas parceiras próximas:</div>
                 <div style="display: flex; gap: 10px; margin-top: 5px; font-size: 11px; color: #00ffff; justify-content: center; flex-wrap: wrap;">
-                    <span>Auto Silva (3km)</span>
-                    <span>•</span>
-                    <span>Oficina do Zé (5km)</span>
-                    <span>•</span>
-                    <span>Mecânica Rápida (8km)</span>
+                    <span>Auto Silva (3km)</span> <span>•</span> <span>Oficina do Zé (5km)</span> <span>•</span> <span>Mecânica Rápida (8km)</span>
                 </div>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown("""
-            <div class="cliente-card">
-                <div class="cliente-titulo">👋 BEM-VINDO</div>
-                <div class="cliente-texto" style="text-align:center;">
-                    Selecione um código de falha e execute a análise<br>
-                    para gerar uma orientação para seu cliente.
-                </div>
-                <div style="text-align:center; margin-top:20px;">
-                    <span style="font-size:48px;">🔧</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-                
-                st.markdown('</div>', unsafe_allow_html=True)
-        else:
-            st.info("Execute um escaneamento primeiro na página Dashboard")
-    
-    with col2:
-        st.markdown("### 👤 ORIENTAÇÃO AO CLIENTE")
-        
-        if st.session_state.get('analysis_result'):
-            res = st.session_state.analysis_result
-            cor_urgencia = "#ff0000" if res['urgencia'] == 'ALTA' else "#ffaa00"
-            
-            st.markdown(f"""
-            <div class="cliente-card">
-                <div class="cliente-titulo">🔍 DIAGNÓSTICO SIMPLIFICADO</div>
-                
-                <div class="cliente-sub">⚠️ Problema Detectado:</div>
-                <div class="cliente-texto">{res['problema']}</div>
-                
-                <div class="cliente-sub">📝 Explicação:</div>
-                <div class="cliente-texto">{res['explicacao']}</div>
-                
-                <div class="cliente-sub">🔧 Causa Provável:</div>
-                <div class="cliente-texto">{res['causa']}</div>
-                
-                <div class="cliente-sub">✅ Solução:</div>
-                <div class="cliente-texto">{res['solucao']}</div>
-                
-                <div class="orcamento-box">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <div class="orcamento-valor">R$ {res['valor']:.2f}</div>
-                            <div class="orcamento-detalhe">Tempo: {res['tempo']}</div>
-                        </div>
-                        <div style="color:{cor_urgencia}; font-weight:bold;">
-                            {res['urgencia']}
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- BOTÕES HORIZONTAIS (CORRIGIDO) -->
-                <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <button style="flex: 1; background: #25D366; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" 
-                            onclick="alert('Contato enviado para oficina parceira!')">
-                        📱 WHATSAPP
-                    </button>
-                    <button style="flex: 1; background: #ff6600; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" 
-                            onclick="alert('Orçamento gerado com sucesso!')">
-                        💰 ORÇAMENTO
-                    </button>
-                </div>
-                <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <button style="flex: 1; background: #0047ab; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" 
-                            onclick="alert('Agendamento realizado!')">
-                        📅 AGENDAR
-                    </button>
-                    <button style="flex: 1; background: #00ff00; color: black; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" 
-                            onclick="alert('Relatório enviado por e-mail!')">
-                        📧 ENVIAR
-                    </button>
-                </div>
-                
-                <div style="text-align: center; margin-top: 15px; color: #888; font-size: 11px;">
-                    Oficinas parceiras próximas:
-                </div>
-                <div style="display: flex; gap: 10px; margin-top: 5px; font-size: 11px; color: #00ffff; justify-content: center;">
-                    <span>Auto Silva (3km)</span>
-                    <span>•</span>
-                    <span>Oficina do Zé (5km)</span>
-                    <span>•</span>
-                    <span>Mecânica Rápida (8km)</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown("""
-            <div class="cliente-card">
-                <div class="cliente-titulo">👋 BEM-VINDO</div>
-                <div class="cliente-texto" style="text-align:center;">
-                    Selecione um código de falha e execute a análise<br>
-                    para gerar uma orientação para seu cliente.
-                </div>
-                <div style="text-align:center; margin-top:20px;">
-                    <span style="font-size:48px;">🔧</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-                
-                st.markdown('</div>', unsafe_allow_html=True)
-        else:
-            st.info("Execute um escaneamento primeiro na página Dashboard")
-    
-    with col2:
-        st.markdown("### 👤 ORIENTAÇÃO AO CLIENTE")
-        
-        if st.session_state.get('analysis_result'):
-            res = st.session_state.analysis_result
-            cor_urgencia = "#ff0000" if res['urgencia'] == 'ALTA' else "#ffaa00"
-            
-            st.markdown(f"""
-            <div class="cliente-card">
-                <div class="cliente-titulo">🔍 DIAGNÓSTICO SIMPLIFICADO</div>
-                
-                <div class="cliente-sub">⚠️ Problema Detectado:</div>
-                <div class="cliente-texto">{res['problema']}</div>
-                
-                <div class="cliente-sub">📝 Explicação:</div>
-                <div class="cliente-texto">{res['explicacao']}</div>
-                
-                <div class="cliente-sub">🔧 Causa Provável:</div>
-                <div class="cliente-texto">{res['causa']}</div>
-                
-                <div class="cliente-sub">✅ Solução:</div>
-                <div class="cliente-texto">{res['solucao']}</div>
-                
-                <div class="orcamento-box">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <div class="orcamento-valor">R$ {res['valor']:.2f}</div>
-                            <div class="orcamento-detalhe">Tempo: {res['tempo']}</div>
-                        </div>
-                        <div style="color:{cor_urgencia}; font-weight:bold;">
-                            {res['urgencia']}
-                        </div>
-                    </div>
-                </div>
-                
-                <button style="width:100%; background:#25D366; color:white; padding:12px; border:none; border-radius:8px; margin-top:15px; font-weight:bold; cursor:pointer;" onclick="alert('Contato enviado para oficina parceira!')">
-                    📱 ENCAMINHAR PARA OFICINA
-                </button>
             </div>
             """, unsafe_allow_html=True)
         else:
@@ -869,13 +693,15 @@ elif st.session_state.current_page == "Diagnóstico IA":
             </div>
             """, unsafe_allow_html=True)
 
+# =============================================
+# CONTROLE ATIVO
+# =============================================
 elif st.session_state.current_page == "Controle Ativo":
     st.markdown("## ⚡ CONTROLE ATIVO DO MOTOR")
     
     if not st.session_state.connected:
         st.warning("⚠️ Conecte-se a um veículo para usar o Controle Ativo")
     else:
-        # Métricas em tempo real (STFT, LTFT, MAF)
         col1, col2, col3 = st.columns(3)
         
         with col1:
@@ -931,6 +757,9 @@ elif st.session_state.current_page == "Controle Ativo":
                 st.success("✅ Flex Fuel resetado com sucesso")
                 st.session_state.log.append("🔄 Reset Flex Fuel")
 
+# =============================================
+# VISUALIZADOR 3D
+# =============================================
 elif st.session_state.current_page == "Visualizador 3D":
     st.markdown("## 🔍 VISUALIZADOR 3D DE COMPONENTES")
     
@@ -954,7 +783,7 @@ elif st.session_state.current_page == "Visualizador 3D":
     with col2:
         if st.session_state.get('analysis_result'):
             st.markdown("""
-            <div class="info-panel" style="background:#1a1d24; padding:15px; border-radius:10px; border:1px solid #00ffff;">
+            <div style="background:#1a1d24; padding:15px; border-radius:10px; border:1px solid #00ffff;">
                 <h4 style="color:#00ffff;">Informações</h4>
                 <p><strong>Localização:</strong> Cabeçote do motor</p>
                 <p><strong>Função:</strong> Ignição</p>
@@ -963,6 +792,9 @@ elif st.session_state.current_page == "Visualizador 3D":
         else:
             st.info("Execute um diagnóstico para ver componentes")
 
+# =============================================
+# RELATÓRIOS
+# =============================================
 elif st.session_state.current_page == "Relatórios":
     st.markdown("## 📋 RELATÓRIOS E LOGS")
     
@@ -998,9 +830,3 @@ with col2:
 if st.session_state.connected:
     time.sleep(1)
     st.rerun()
-
-
-
-
-
-
