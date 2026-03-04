@@ -859,11 +859,12 @@ with col1:
         st.caption("📌 Sistema pronto")
 
 with col2:
-    st.caption(f"⏱️ {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} • RASTHER JPO v1.0")
-
+    st.caption(f"⏱️ {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} • RASTHER JPO")
+    st.caption("Criado por Pedro Graciano")
 # =============================================
 # ATUALIZAÇÃO AUTOMÁTICA
 # =============================================
 if st.session_state.connected:
     time.sleep(1)
     st.rerun()
+
