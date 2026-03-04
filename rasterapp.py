@@ -322,6 +322,43 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     .stDeployButton {display:none;}
+    
+    /* Correção para os botões do cliente */
+    .cliente-card button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+        margin: 0;
+    }
+    
+    .cliente-card button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    
+    .btn-whatsapp {
+        background: #25D366;
+        color: white;
+    }
+    
+    .btn-orcamento {
+        background: #ff6600;
+        color: white;
+    }
+    
+    .btn-agendar {
+        background: #0047ab;
+        color: white;
+    }
+    
+    .btn-email {
+        background: #00ff00;
+        color: black;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -665,12 +702,12 @@ elif st.session_state.current_page == "Diagnóstico IA":
                 </div>
                 
                 <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <button style="flex: 1; background: #25D366; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="alert('Contato enviado para oficina parceira!')">📱 WHATSAPP</button>
-                    <button style="flex: 1; background: #ff6600; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="alert('Orçamento gerado com sucesso!')">💰 ORÇAMENTO</button>
+                    <button class="btn-whatsapp" style="flex:1;" onclick="alert('Contato enviado para oficina parceira!')">📱 WHATSAPP</button>
+                    <button class="btn-orcamento" style="flex:1;" onclick="alert('Orçamento gerado com sucesso!')">💰 ORÇAMENTO</button>
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <button style="flex: 1; background: #0047ab; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="alert('Agendamento realizado!')">📅 AGENDAR</button>
-                    <button style="flex: 1; background: #00ff00; color: black; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="alert('Relatório enviado por e-mail!')">📧 ENVIAR</button>
+                    <button class="btn-agendar" style="flex:1;" onclick="alert('Agendamento realizado!')">📅 AGENDAR</button>
+                    <button class="btn-email" style="flex:1;" onclick="alert('Relatório enviado por e-mail!')">📧 ENVIAR</button>
                 </div>
                 
                 <div style="text-align: center; margin-top: 15px; color: #888; font-size: 11px;">Oficinas parceiras próximas:</div>
